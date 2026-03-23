@@ -148,15 +148,15 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        <div className="view-toggles glass-card">
+        <div className="view-mode-toggle glass-card">
           <button 
-            className={`view-toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
+            className={`toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
             onClick={() => setViewMode('day')}
           >
             Day
           </button>
           <button 
-            className={`view-toggle-btn ${viewMode === 'week' ? 'active' : ''}`}
+            className={`toggle-btn ${viewMode === 'week' ? 'active' : ''}`}
             onClick={() => setViewMode('week')}
           >
             Week
@@ -311,11 +311,12 @@ const Dashboard = () => {
               <div className="form-row">
                 <div className="form-group flex-2">
                   <label>Notes</label>
-                  <input 
-                    type="text" 
-                    placeholder="What did you work on?" 
+                  <textarea 
+                    placeholder="Work details..." 
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
+                    className="modal-textarea"
+                    rows={4}
                   />
                 </div>
                 <div className="form-group flex-1">

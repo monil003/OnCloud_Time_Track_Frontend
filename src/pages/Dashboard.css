@@ -1,7 +1,7 @@
 .dashboard-container {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 20px;
 }
 
 .dashboard-header {
@@ -85,14 +85,14 @@
   text-underline-offset: 4px;
 }
 
-.view-toggles {
+.view-mode-toggle {
   display: flex;
   padding: 4px;
   background: var(--surface-color);
   border-radius: 14px;
 }
 
-.view-toggle-btn {
+.toggle-btn {
   padding: 8px 20px;
   border-radius: 10px;
   font-size: 14px;
@@ -100,7 +100,7 @@
   color: var(--text-light);
 }
 
-.view-toggle-btn.active {
+.toggle-btn.active {
   background: var(--primary-orange);
   color: white;
   box-shadow: 0 4px 12px rgba(243, 108, 33, 0.2);
@@ -110,7 +110,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 16px 24px;
 }
 
 .week-days-row {
@@ -124,7 +124,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
+  padding: 8px;
   border-radius: 16px;
   cursor: pointer;
   transition: var(--transition-fast);
@@ -196,7 +196,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .entries-list-header h3 {
@@ -227,7 +227,7 @@
 
 .today-entries-list {
   flex: 1;
-  margin-top: 32px;
+  margin-top: 16px;
 }
 
 .entries-grid {
@@ -240,7 +240,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 12px 24px;
   transition: var(--transition-fast);
 }
 
@@ -336,6 +336,37 @@
 .empty-icon {
   margin-bottom: 16px;
   color: var(--border-color);
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  background: white;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  min-height: 140px;
+  max-height: 200px;
+  overflow-y: auto;
+  outline: none;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.modal-textarea:focus {
+  border-color: #334155;
+  box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.05);
 }
 
 .modal-overlay {

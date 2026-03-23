@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths } from 'date-fns';
-import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText, Users, User, Download } from 'lucide-react';
+import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText, Users, User, Download, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
 import './Reports.css';
 
 const Reports = () => {
@@ -11,10 +11,19 @@ const Reports = () => {
   const [projects, setProjects] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('personal'); // 'personal' or 'team'
+  
+  // Edit modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState(null);
+  const [editProjectId, setEditProjectId] = useState('');
+  const [taskType, setTaskType] = useState('Programming');
+  const [notes, setNotes] = useState('');
+  const [duration, setDuration] = useState('0:00');
 
   const fetchData = async () => {
     try {
@@ -25,6 +34,9 @@ const Reports = () => {
       let entriesUrl = `${endpoint}?startDate=${startDate}&endDate=${endDate}`;
       if (isTeamView && selectedUserId) {
         entriesUrl += `&userId=${selectedUserId}`;
+      }
+      if (isTeamView && selectedProjectId) {
+        entriesUrl += `&projectId=${selectedProjectId}`;
       }
 
       const requests = [
@@ -51,7 +63,7 @@ const Reports = () => {
 
   useEffect(() => {
     fetchData();
-  }, [viewMode, startDate, endDate, selectedUserId]);
+  }, [viewMode, startDate, endDate, selectedUserId, selectedProjectId]);
 
   const monthEntries = timeEntries;
   const monthDays = eachDayOfInterval({ 
@@ -65,6 +77,67 @@ const Reports = () => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return `${h}h ${m}m`;
+  };
+
+  const formatDurationDisplay = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const parseDurationToMins = (str) => {
+    if (!str.includes(':')) return parseFloat(str) * 60;
+    const [h, m] = str.split(':');
+    return (parseInt(h) || 0) * 60 + (parseInt(m) || 0);
+  };
+
+  const handleSaveEntry = async () => {
+    if (!editProjectId) return alert("Select a project");
+    const mins = parseDurationToMins(duration);
+    if (mins <= 0) return alert("Enter valid duration");
+
+    try {
+      const res = await api.put(`/api/time-entries/${editingEntryId}`, {
+        projectId: editProjectId,
+        taskType,
+        duration: mins,
+        notes
+      });
+      setTimeEntries(timeEntries.map(e => e._id === editingEntryId ? res.data : e));
+      setIsModalOpen(false);
+      resetForm();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteEntry = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this time entry?")) return;
+    try {
+      await api.delete(`/api/time-entries/${id}`);
+      setTimeEntries(timeEntries.filter(e => e._id !== id));
+      setIsModalOpen(false);
+      resetForm();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const openEditModal = (entry) => {
+    setEditingEntryId(entry._id);
+    setEditProjectId(entry.projectId?._id || entry.projectId);
+    setTaskType(entry.taskType);
+    setNotes(entry.notes);
+    setDuration(formatDurationDisplay(entry.duration));
+    setIsModalOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingEntryId(null);
+    setEditProjectId('');
+    setTaskType('Programming');
+    setNotes('');
+    setDuration('0:00');
   };
 
   const projectSummary = projects.map(p => {
@@ -259,7 +332,7 @@ const Reports = () => {
                 <span>to</span>
                 <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
               </div>
-              <div className="user-filter">
+              <div className="report-dropdowns">
                 <select 
                   value={selectedUserId} 
                   onChange={(e) => setSelectedUserId(e.target.value)}
@@ -268,6 +341,16 @@ const Reports = () => {
                   <option value="">All Employees</option>
                   {allUsers.map(u => (
                     <option key={u._id} value={u._id}>{u.name}</option>
+                  ))}
+                </select>
+                <select 
+                  value={selectedProjectId} 
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="user-select"
+                >
+                  <option value="">All Projects</option>
+                  {projects.map(p => (
+                    <option key={p._id} value={p._id}>{p.name} - {p.clientOrTask}</option>
                   ))}
                 </select>
               </div>
@@ -281,11 +364,12 @@ const Reports = () => {
               <thead>
                 <tr>
                   <th>Employee</th>
-                  <th>Date</th>
+                   <th>Date</th>
                   <th>Project</th>
                   <th>Task</th>
                   <th>Hours</th>
                   <th>Notes</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,10 +384,85 @@ const Reports = () => {
                     <td><span className="task-badge">{entry.taskType}</span></td>
                     <td className="hours-cell">{formatDuration(entry.duration)}</td>
                     <td className="notes-cell" title={entry.notes}>{entry.notes || '-'}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button className="table-action-btn edit" onClick={() => openEditModal(entry)}><Edit2 size={14} /></button>
+                        <button className="table-action-btn delete" onClick={() => handleDeleteEntry(entry._id)}><Trash2 size={14} /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Admin Edit Time Entry</h3>
+              <p>Employee: {monthEntries.find(e => e._id === editingEntryId)?.userId?.name}</p>
+            </div>
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group flex-2">
+                  <label>Project / Task</label>
+                  <select 
+                    value={editProjectId} 
+                    onChange={(e) => setEditProjectId(e.target.value)}
+                  >
+                    <option value="" disabled>Select project...</option>
+                    {projects.map(p => (
+                      <option key={p._id} value={p._id}>{p.name} - {p.clientOrTask}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group flex-1">
+                  <label>Task Type</label>
+                  <select 
+                    value={taskType} 
+                    onChange={(e) => setTaskType(e.target.value)}
+                  >
+                    <option value="Programming">Programming</option>
+                    <option value="Design">Design</option>
+                    <option value="Research">Research</option>
+                    <option value="NetSuite">NetSuite Support</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group flex-2">
+                  <label>Notes</label>
+                  <textarea 
+                    placeholder="Work details..." 
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    className="modal-textarea"
+                    rows={4}
+                  />
+                </div>
+                <div className="form-group flex-1 duration-input-group">
+                  <label>Duration</label>
+                  <input 
+                    type="text" 
+                    placeholder="0:00" 
+                    value={duration}
+                    onChange={e => setDuration(e.target.value)}
+                    className="duration-input"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div className="modal-footer-left">
+                <button className="btn btn-orange" onClick={handleSaveEntry}>Update entry</button>
+                <button className="btn btn-outline" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
+              </div>
+              <button className="text-btn danger" onClick={() => handleDeleteEntry(editingEntryId)}>Delete</button>
+            </div>
           </div>
         </div>
       )}

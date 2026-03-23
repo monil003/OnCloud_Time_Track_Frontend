@@ -443,3 +443,26 @@
   color: var(--text-light);
   font-style: italic;
 }
+
+.modal-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  background: white;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  min-height: 140px;
+  max-height: 200px;
+  overflow-y: auto;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.modal-textarea:focus {
+  border-color: #334155;
+  box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.05);
+}
