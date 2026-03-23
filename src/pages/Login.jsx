@@ -1,36 +1,47 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { LogIn, Mail, Lock, ArrowRight } from 'lucide-react';
 import './Auth.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
     try {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
-      <div className="auth-box">
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <h1 style={{ color: 'var(--primary-orange)' }}>OnCloud Time</h1>
-          <p style={{ color: 'var(--text-light)', marginTop: '5px' }}>Sign in to track your time</p>
+      <div className="auth-box glass-card">
+        <div className="auth-header">
+          <div className="logo-icon">
+            <LogIn size={32} />
+          </div>
+          <h1>OnCloud Time</h1>
+          <p>Precision tracking for modern teams</p>
         </div>
+
         {error && <div className="error-msg">{error}</div>}
-        <form onSubmit={handleSubmit}>
+
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label>Work Email</label>
+            <label><Mail size={14} /> Work Email</label>
             <input 
               type="email" 
               placeholder="name@company.com" 
@@ -40,18 +51,23 @@ const Login = () => {
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label><Lock size={14} /> Password</label>
             <input 
               type="password" 
+              placeholder="••••••••"
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               required 
             />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>Sign In</button>
+          <button type="submit" className="btn btn-orange auth-btn" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />
+          </button>
         </form>
+
         <div className="auth-footer">
-          Don't have an account? <Link to="/register" style={{ color: 'var(--primary-orange)', textDecoration: 'none' }}>Sign Up</Link>
+          <span>New to OnCloud Time?</span>
+          <Link to="/register">Create an account</Link>
         </div>
       </div>
     </div>
@@ -59,3 +75,4 @@ const Login = () => {
 };
 
 export default Login;
+

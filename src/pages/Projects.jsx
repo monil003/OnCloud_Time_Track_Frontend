@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import { Briefcase, Plus, LayoutGrid, Calendar, Trash2, Edit2 } from 'lucide-react';
 import './Projects.css';
 
 const Projects = () => {
@@ -8,10 +8,12 @@ const Projects = () => {
   const [name, setName] = useState('');
   const [clientOrTask, setClientOrTask] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/projects');
+      setLoading(true);
+      const res = await api.get('/api/projects');
       setProjects(res.data);
     } catch (err) {
       console.error('Error fetching projects', err);
@@ -28,76 +30,98 @@ const Projects = () => {
     e.preventDefault();
     if (!name) return;
     try {
-      await axios.post('http://localhost:5000/api/projects', { name, clientOrTask });
+      await api.post('/api/projects', { name, clientOrTask });
       setName('');
       setClientOrTask('');
+      setIsAdding(false);
       fetchProjects();
     } catch (err) {
       console.error('Error creating project', err);
     }
   };
 
-  if (loading) return <div>Loading projects...</div>;
+  if (loading) return <div className="loading-state">Loading projects...</div>;
 
   return (
     <div className="projects-container">
       <div className="projects-header">
-        <h2>Projects</h2>
+        <div className="header-title">
+          <Briefcase className="icon" />
+          <h1>Projects</h1>
+        </div>
+        <button className="btn btn-orange" onClick={() => setIsAdding(!isAdding)}>
+          <Plus size={18} /> {isAdding ? 'Cancel' : 'New Project'}
+        </button>
       </div>
 
-      <div className="project-form-card">
-        <h3>Add New Project</h3>
-        <form onSubmit={handleSubmit} className="project-form">
-          <div className="form-group row">
-            <div className="input-col">
-              <label>Project Name</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                placeholder="e.g. Internal Tool" 
-                required 
-              />
+      {isAdding && (
+        <div className="project-form-card glass-card">
+          <h3>Create New Project</h3>
+          <form onSubmit={handleSubmit} className="project-form">
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Project Name</label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={e => setName(e.target.value)} 
+                  placeholder="e.g. Website Redesign" 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Client / Task Description</label>
+                <input 
+                  type="text" 
+                  value={clientOrTask} 
+                  onChange={e => setClientOrTask(e.target.value)} 
+                  placeholder="e.g. Acme Corp / Landing Page" 
+                />
+              </div>
             </div>
-            <div className="input-col">
-              <label>Client / Client Task</label>
-              <input 
-                type="text" 
-                value={clientOrTask} 
-                onChange={e => setClientOrTask(e.target.value)} 
-                placeholder="e.g. Acme Corp" 
-              />
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">Save Project</button>
+              <button type="button" className="btn btn-outline" onClick={() => setIsAdding(false)}>Cancel</button>
             </div>
-            <div className="btn-col">
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '22px' }}>Save Project</button>
-            </div>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
 
       <div className="projects-list">
-        <h3>Your Projects</h3>
+        <div className="list-header">
+          <h3><LayoutGrid size={20} /> Your Active Projects</h3>
+          <span className="project-count">{projects.length} total</span>
+        </div>
+        
         {projects.length === 0 ? (
-          <p className="empty-state">No projects found. Create one above.</p>
+          <div className="empty-projects glass-card">
+            <Briefcase size={48} className="empty-icon" />
+            <p>No projects found. Create your first project to start tracking time!</p>
+          </div>
         ) : (
-          <table className="projects-table">
-            <thead>
-              <tr>
-                <th>Project Name</th>
-                <th>Client / Task</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.map(proj => (
-                <tr key={proj._id}>
-                  <td>{proj.name}</td>
-                  <td>{proj.clientOrTask || '-'}</td>
-                  <td>{new Date(proj.createdAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="projects-grid">
+            {projects.map(proj => (
+              <div key={proj._id} className="project-card glass-card">
+                <div className="project-card-header">
+                  <div className="project-info">
+                    <h4>{proj.name}</h4>
+                    <p>{proj.clientOrTask || 'Internal Task'}</p>
+                  </div>
+                  <div className="project-actions">
+                    <button className="action-btn"><Edit2 size={16} /></button>
+                    <button className="action-btn delete"><Trash2 size={16} /></button>
+                  </div>
+                </div>
+                <div className="project-card-footer">
+                  <div className="project-meta">
+                    <Calendar size={14} />
+                    <span>Created {new Date(proj.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="project-status">Active</div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -105,3 +129,4 @@ const Projects = () => {
 };
 
 export default Projects;
+

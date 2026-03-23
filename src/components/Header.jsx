@@ -12,6 +12,7 @@ const Header = () => {
       <div className="header-nav">
         <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Time</NavLink>
         <NavLink to="/projects" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Projects</NavLink>
+        <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Reports</NavLink>
       </div>
       <div className="user-menu" style={{ cursor: 'pointer' }} onClick={logout} title="Click to Logout">
         <div className="avatar">
