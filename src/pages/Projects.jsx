@@ -11,6 +11,7 @@ const Projects = () => {
   const [clientOrTask, setClientOrTask] = useState('');
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
   const isAdmin = user?.role === 'admin';
 
@@ -34,14 +35,40 @@ const Projects = () => {
     e.preventDefault();
     if (!name || !isAdmin) return;
     try {
-      await api.post('/api/projects', { name, clientOrTask });
-      setName('');
-      setClientOrTask('');
-      setIsAdding(false);
+      if (editingProject) {
+        await api.put(`/api/projects/${editingProject._id}`, { name, clientOrTask });
+      } else {
+        await api.post('/api/projects', { name, clientOrTask });
+      }
+      resetForm();
       fetchProjects();
     } catch (err) {
-      console.error('Error creating project', err);
+      console.error('Error saving project', err);
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this project?')) return;
+    try {
+      await api.delete(`/api/projects/${id}`);
+      fetchProjects();
+    } catch (err) {
+      console.error('Error deleting project', err);
+    }
+  };
+
+  const startEdit = (proj) => {
+    setEditingProject(proj);
+    setName(proj.name);
+    setClientOrTask(proj.clientOrTask);
+    setIsAdding(true);
+  };
+
+  const resetForm = () => {
+    setName('');
+    setClientOrTask('');
+    setIsAdding(false);
+    setEditingProject(null);
   };
 
   if (loading) return <div className="loading-state">Loading projects...</div>;
@@ -54,7 +81,7 @@ const Projects = () => {
           <h1>Projects</h1>
         </div>
         {isAdmin && (
-          <button className="btn btn-orange" onClick={() => setIsAdding(!isAdding)}>
+          <button className="btn btn-orange" onClick={() => (isAdding ? resetForm() : setIsAdding(true))}>
             <Plus size={18} /> {isAdding ? 'Cancel' : 'New Project'}
           </button>
         )}
@@ -62,7 +89,7 @@ const Projects = () => {
 
       {isAdding && isAdmin && (
         <div className="project-form-card glass-card">
-          <h3>Create New Project</h3>
+          <h3>{editingProject ? 'Edit Project' : 'Create New Project'}</h3>
           <form onSubmit={handleSubmit} className="project-form">
             <div className="form-grid">
               <div className="form-group">
@@ -86,8 +113,8 @@ const Projects = () => {
               </div>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">Save Project</button>
-              <button type="button" className="btn btn-outline" onClick={() => setIsAdding(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editingProject ? 'Update' : 'Save'} Project</button>
+              <button type="button" className="btn btn-outline" onClick={resetForm}>Cancel</button>
             </div>
           </form>
         </div>
@@ -115,8 +142,8 @@ const Projects = () => {
                   </div>
                   {isAdmin && (
                     <div className="project-actions">
-                      <button className="action-btn"><Edit2 size={16} /></button>
-                      <button className="action-btn delete"><Trash2 size={16} /></button>
+                      <button className="action-btn" onClick={() => startEdit(proj)}><Edit2 size={16} /></button>
+                      <button className="action-btn delete" onClick={() => handleDelete(proj._id)}><Trash2 size={16} /></button>
                     </div>
                   )}
                 </div>

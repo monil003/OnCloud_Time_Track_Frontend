@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Plus, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2, Edit2, Trash2 } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -10,12 +10,14 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
   
   // Form state
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [taskType, setTaskType] = useState('Programming');
   const [notes, setNotes] = useState('');
   const [duration, setDuration] = useState('0:00');
+  const [editingEntryId, setEditingEntryId] = useState(null);
 
   const fetchInitialData = async () => {
     try {
@@ -58,14 +60,25 @@ const Dashboard = () => {
     if (mins <= 0) return alert("Enter valid duration");
 
     try {
-      const res = await api.post('/api/time-entries', {
-        projectId: selectedProjectId,
-        taskType,
-        date: currentDate,
-        duration: mins,
-        notes
-      });
-      setTimeEntries([res.data, ...timeEntries]);
+      if (editingEntryId) {
+        const res = await api.put(`/api/time-entries/${editingEntryId}`, {
+          projectId: selectedProjectId,
+          taskType,
+          date: currentDate,
+          duration: mins,
+          notes
+        });
+        setTimeEntries(timeEntries.map(e => e._id === editingEntryId ? res.data : e));
+      } else {
+        const res = await api.post('/api/time-entries', {
+          projectId: selectedProjectId,
+          taskType,
+          date: currentDate,
+          duration: mins,
+          notes
+        });
+        setTimeEntries([res.data, ...timeEntries]);
+      }
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -73,11 +86,31 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteEntry = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this time entry?")) return;
+    try {
+      await api.delete(`/api/time-entries/${id}`);
+      setTimeEntries(timeEntries.filter(e => e._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const openEditModal = (entry) => {
+    setEditingEntryId(entry._id);
+    setSelectedProjectId(entry.projectId?._id || entry.projectId);
+    setTaskType(entry.taskType);
+    setNotes(entry.notes);
+    setDuration(formatDurationDisplay(entry.duration));
+    setIsModalOpen(true);
+  };
+
   const resetForm = () => {
     setSelectedProjectId('');
     setTaskType('Programming');
     setNotes('');
     setDuration('0:00');
+    setEditingEntryId(null);
   };
 
   const todayEntries = timeEntries.filter(e => isSameDay(new Date(e.date), currentDate));
@@ -97,15 +130,37 @@ const Dashboard = () => {
             <button className="date-nav-btn" onClick={() => setCurrentDate(addDays(currentDate, 1))}><ChevronRight /></button>
           </div>
           <div className="current-date-info">
-            <h2>{format(currentDate, 'EEEE, d MMM')}</h2>
+            <div className="date-picker-wrapper">
+              <h2>{format(currentDate, 'EEEE, d MMM')}</h2>
+              <label htmlFor="dashboard-date-picker" className="date-picker-icon" title="Jump to date">
+                <Calendar size={18} />
+              </label>
+              <input 
+                type="date" 
+                id="dashboard-date-picker"
+                className="hidden-date-input"
+                value={format(currentDate, 'yyyy-MM-dd')}
+                onChange={(e) => setCurrentDate(new Date(e.target.value))}
+              />
+            </div>
             {!isSameDay(currentDate, new Date()) && (
               <span className="return-today" onClick={() => setCurrentDate(new Date())}>Return to today</span>
             )}
           </div>
         </div>
         <div className="view-toggles glass-card">
-          <button className="view-toggle-btn active">Day</button>
-          <button className="view-toggle-btn">Week</button>
+          <button 
+            className={`view-toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
+            onClick={() => setViewMode('day')}
+          >
+            Day
+          </button>
+          <button 
+            className={`view-toggle-btn ${viewMode === 'week' ? 'active' : ''}`}
+            onClick={() => setViewMode('week')}
+          >
+            Week
+          </button>
         </div>
       </div>
 
@@ -139,34 +194,80 @@ const Dashboard = () => {
 
           <div className="today-entries-list">
             <div className="entries-list-header">
-              <h3>Today's Entries</h3>
-              <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
-                <Plus size={18} /> Track Time
-              </button>
+              <h3>{viewMode === 'day' ? "Today's Entries" : "Weekly Summary"}</h3>
+              {viewMode === 'day' && (
+                <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
+                  <Plus size={18} /> Track Time
+                </button>
+              )}
             </div>
-            {todayEntries.length === 0 ? (
-              <div className="empty-dashboard glass-card">
-                <Clock className="empty-icon" size={48} />
-                <p>"Time is on my side, yes it is."</p>
-                <span>- The Rolling Stones</span>
-              </div>
-            ) : (
-              <div className="entries-grid">
-                {todayEntries.map(entry => (
-                  <div className="entry-card glass-card" key={entry._id}>
-                    <div className="entry-main">
-                      <div className="project-badge">
-                        {entry.projectId?.name || 'Internal'}
+
+            {viewMode === 'day' ? (
+              todayEntries.length === 0 ? (
+                <div className="empty-dashboard glass-card">
+                  <Clock className="empty-icon" size={48} />
+                  <p>"Time is on my side, yes it is."</p>
+                  <span>- The Rolling Stones</span>
+                </div>
+              ) : (
+                <div className="entries-grid">
+                  {todayEntries.map(entry => (
+                    <div className="entry-card glass-card" key={entry._id}>
+                      <div className="entry-main">
+                        <div className="project-badge">
+                          {entry.projectId?.name || 'Internal'}
+                        </div>
+                        <h4 className="entry-title">{entry.projectId?.clientOrTask || 'General Task'}</h4>
+                        <p className="entry-meta">{entry.taskType} • {entry.notes || 'No notes'}</p>
                       </div>
-                      <h4 className="entry-title">{entry.projectId?.clientOrTask || 'General Task'}</h4>
-                      <p className="entry-meta">{entry.taskType} • {entry.notes || 'No notes'}</p>
+                      <div className="entry-right">
+                        <span className="duration-text">{formatDurationDisplay(entry.duration)}</span>
+                        <div className="entry-actions">
+                          <button className="entry-action-btn" onClick={() => openEditModal(entry)} title="Edit">
+                            <Edit2 size={16} />
+                          </button>
+                          <button className="entry-action-btn delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <div className="entry-status"><CheckCircle2 size={16} /></div>
+                      </div>
                     </div>
-                    <div className="entry-right">
-                      <span className="duration-text">{formatDurationDisplay(entry.duration)}</span>
-                      <div className="entry-status"><CheckCircle2 size={16} /></div>
+                  ))}
+                </div>
+              )
+            ) : (
+              // Week View Summary
+              <div className="week-summary-grid">
+                {projects.map(proj => {
+                  const projWeekEntries = timeEntries.filter(e => {
+                    const d = new Date(e.date);
+                    return (e.projectId?._id === proj._id || e.projectId === proj._id) && d >= weekStart && d <= addDays(weekStart, 6);
+                  });
+                  const projTotal = projWeekEntries.reduce((acc, curr) => acc + curr.duration, 0);
+                  
+                  if (projTotal === 0) return null;
+
+                  return (
+                    <div key={proj._id} className="week-project-card glass-card">
+                      <div className="week-project-info">
+                        <div className="project-badge">{proj.name}</div>
+                        <h4>{proj.clientOrTask || 'Internal Task'}</h4>
+                        <p>{projWeekEntries.length} entries this week</p>
+                      </div>
+                      <div className="week-project-total">
+                        <span className="label">Total</span>
+                        <span className="value">{formatDurationDisplay(projTotal)}</span>
+                      </div>
                     </div>
+                  );
+                })}
+                {weekTotalMins === 0 && (
+                  <div className="empty-dashboard glass-card">
+                    <Calendar className="empty-icon" size={48} />
+                    <p>No time tracked yet for this week.</p>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -176,7 +277,7 @@ const Dashboard = () => {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Track Time</h3>
+              <h3>{editingEntryId ? 'Edit Time Entry' : 'Track Time'}</h3>
               <p>{format(currentDate, 'EEEE, d MMMM')}</p>
             </div>
             <div className="modal-body">
@@ -229,8 +330,10 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-orange" onClick={handleSaveEntry}>Save Entry</button>
-              <button className="btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button className="btn btn-orange" onClick={handleSaveEntry}>
+                {editingEntryId ? 'Update Entry' : 'Save Entry'}
+              </button>
+              <button className="btn btn-outline" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
               <div className="calendar-sync">
                 <Calendar size={16} />
                 <span>Sync Calendar</span>

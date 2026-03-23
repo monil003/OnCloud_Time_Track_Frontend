@@ -38,9 +38,42 @@
   transform: translateY(-1px);
 }
 
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.date-picker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.date-picker-icon:hover {
+  background: var(--surface-color);
+  color: var(--primary-orange);
+}
+
+.hidden-date-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 .current-date-info h2 {
   font-size: 24px;
   color: var(--text-main);
+  font-weight: 700;
+  margin: 0;
 }
 
 .return-today {
@@ -194,6 +227,7 @@
 
 .today-entries-list {
   flex: 1;
+  margin-top: 32px;
 }
 
 .entries-grid {
@@ -247,6 +281,42 @@
   font-weight: 700;
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
+}
+
+.entry-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  opacity: 0;
+  transition: var(--transition-fast);
+}
+
+.entry-card:hover .entry-actions {
+  opacity: 1;
+}
+
+.entry-action-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.entry-action-btn:hover {
+  background: var(--surface-color);
+  color: var(--primary-orange);
+  transform: translateY(-1px);
+}
+
+.entry-action-btn.delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .entry-status {
@@ -357,6 +427,60 @@
   font-weight: 600;
   color: var(--primary-orange);
   cursor: pointer;
+}
+
+.week-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.week-project-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  transition: var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.week-project-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-orange);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+}
+
+.week-project-info h4 {
+  font-size: 18px;
+  margin: 8px 0 4px;
+}
+
+.week-project-info p {
+  font-size: 13px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.week-project-total {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.week-project-total .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-light);
+  letter-spacing: 0.5px;
+}
+
+.week-project-total .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-orange);
+  font-family: 'Outfit', sans-serif;
 }
 
 .loading-state {

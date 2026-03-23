@@ -2,30 +2,46 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths } from 'date-fns';
-import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText, Users, User } from 'lucide-react';
+import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText, Users, User, Download } from 'lucide-react';
 import './Reports.css';
 
 const Reports = () => {
   const { user } = useContext(AuthContext);
   const [timeEntries, setTimeEntries] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('personal'); // 'personal' or 'team'
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const endpoint = (user.role === 'admin' && viewMode === 'team') 
-        ? '/api/time-entries/admin' 
-        : '/api/time-entries';
+      const isTeamView = user.role === 'admin' && viewMode === 'team';
+      const endpoint = isTeamView ? '/api/time-entries/admin' : '/api/time-entries';
+      
+      let entriesUrl = `${endpoint}?startDate=${startDate}&endDate=${endDate}`;
+      if (isTeamView && selectedUserId) {
+        entriesUrl += `&userId=${selectedUserId}`;
+      }
 
-      const [entriesRes, projectsRes] = await Promise.all([
-        api.get(endpoint),
+      const requests = [
+        api.get(entriesUrl),
         api.get('/api/projects')
-      ]);
-      setTimeEntries(entriesRes.data);
-      setProjects(projectsRes.data);
+      ];
+
+      if (user.role === 'admin' && allUsers.length === 0) {
+        requests.push(api.get('/api/auth'));
+      }
+
+      const results = await Promise.all(requests);
+      setTimeEntries(results[0].data);
+      setProjects(results[1].data);
+      if (results[2]) {
+        setAllUsers(results[2].data);
+      }
     } catch (err) {
       console.error('Error fetching report data', err);
     } finally {
@@ -35,15 +51,12 @@ const Reports = () => {
 
   useEffect(() => {
     fetchData();
-  }, [viewMode]);
+  }, [viewMode, startDate, endDate, selectedUserId]);
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  const monthEntries = timeEntries.filter(entry => {
-    const d = new Date(entry.date);
-    return d >= monthStart && d <= monthEnd;
+  const monthEntries = timeEntries;
+  const monthDays = eachDayOfInterval({ 
+    start: new Date(startDate), 
+    end: new Date(endDate) 
   });
 
   const totalMinutes = monthEntries.reduce((acc, curr) => acc + curr.duration, 0);
@@ -65,6 +78,34 @@ const Reports = () => {
     const tTotal = tEntries.reduce((acc, curr) => acc + curr.duration, 0);
     return { type, total: tTotal };
   }).sort((a, b) => b.total - a.total);
+
+  const handleExportCSV = () => {
+    if (monthEntries.length === 0) return alert("No entries to export");
+    
+    // Header
+    let csv = "Employee,Date,Project,Task,Hours,Notes\n";
+    
+    // Rows
+    monthEntries.forEach(e => {
+      const emp = e.userId?.name || 'Unknown';
+      const date = format(new Date(e.date), 'yyyy-MM-dd');
+      const proj = e.projectId?.name || 'N/A';
+      const task = e.taskType;
+      const hours = (e.duration / 60).toFixed(2);
+      const notes = (e.notes || '').replace(/,/g, ';'); // basic escaping
+      csv += `"${emp}","${date}","${proj}","${task}",${hours},"${notes}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `OnCloud_Time_Report_${startDate}_to_${endDate}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   if (loading) return <div className="loading-state">Loading reports...</div>;
 
@@ -92,14 +133,17 @@ const Reports = () => {
               </button>
             </div>
           )}
-          <div className="month-nav">
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}>
-              <ChevronLeft />
-            </button>
-            <h2>{format(currentMonth, 'MMMM yyyy')}</h2>
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-              <ChevronRight />
-            </button>
+          <div className="filter-controls">
+            <div className="date-range-picker">
+              <div className="range-group">
+                <label>From</label>
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+              </div>
+              <div className="range-group">
+                <label>To</label>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -205,8 +249,32 @@ const Reports = () => {
       {viewMode === 'team' && user.role === 'admin' && (
         <div className="team-activity-section glass-card">
           <div className="section-header">
-            <h3><Users className="section-icon" /> Team Activity Detail</h3>
-            <span className="entry-count">{monthEntries.length} entries</span>
+            <div className="title-area">
+              <h3><Users className="section-icon" /> Team Activity Detail</h3>
+              <span className="entry-count">{monthEntries.length} entries</span>
+            </div>
+            <div className="detail-filters">
+              <div className="mini-date-picker">
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <span>to</span>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+              </div>
+              <div className="user-filter">
+                <select 
+                  value={selectedUserId} 
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="user-select"
+                >
+                  <option value="">All Employees</option>
+                  {allUsers.map(u => (
+                    <option key={u._id} value={u._id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button className="export-btn" onClick={handleExportCSV} title="Export to CSV">
+                <Download size={18} /> Export
+              </button>
+            </div>
           </div>
           <div className="team-table-wrapper">
             <table className="team-table">
