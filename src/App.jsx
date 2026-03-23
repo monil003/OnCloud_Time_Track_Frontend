@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Reports from './pages/Reports';
+import Profile from './pages/Profile';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -21,7 +22,7 @@ const AppContent = () => {
     <Router>
       <div className="app-container">
         <Header />
-        <main className="main-content">
+        <main className="main-content container">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -40,12 +41,18 @@ const AppContent = () => {
                 <Reports />
               </ProtectedRoute>
             } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
       </div>
     </Router>
   );
 };
+
 
 function App() {
   return (

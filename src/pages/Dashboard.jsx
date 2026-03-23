@@ -137,15 +137,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="entries-layout">
-          <div className="add-entry-trigger">
-            <button className="big-add-btn" onClick={() => setIsModalOpen(true)}>
-              <Plus size={32} />
-            </button>
-            <span>Track time</span>
-          </div>
-
           <div className="today-entries-list">
+            <div className="entries-list-header">
+              <h3>Today's Entries</h3>
+              <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
+                <Plus size={18} /> Track Time
+              </button>
+            </div>
             {todayEntries.length === 0 ? (
               <div className="empty-dashboard glass-card">
                 <Clock className="empty-icon" size={48} />
@@ -173,7 +171,6 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-      </div>
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>

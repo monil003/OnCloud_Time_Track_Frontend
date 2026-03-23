@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
-import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths } from 'date-fns';
+import { BarChart, PieChart, Calendar, ChevronLeft, ChevronRight, FileText, Users, User } from 'lucide-react';
 import './Reports.css';
 
 const Reports = () => {
+  const { user } = useContext(AuthContext);
   const [timeEntries, setTimeEntries] = useState([]);
   const [projects, setProjects] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('personal'); // 'personal' or 'team'
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      const endpoint = (user.role === 'admin' && viewMode === 'team') 
+        ? '/api/time-entries/admin' 
+        : '/api/time-entries';
+
       const [entriesRes, projectsRes] = await Promise.all([
-        api.get('/api/time-entries'),
+        api.get(endpoint),
         api.get('/api/projects')
       ]);
       setTimeEntries(entriesRes.data);
@@ -28,7 +35,7 @@ const Reports = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [viewMode]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -48,7 +55,7 @@ const Reports = () => {
   };
 
   const projectSummary = projects.map(p => {
-    const pEntries = monthEntries.filter(e => e.projectId?._id === p._id);
+    const pEntries = monthEntries.filter(e => e.projectId?._id === p._id || e.projectId === p._id);
     const pTotal = pEntries.reduce((acc, curr) => acc + curr.duration, 0);
     return { ...p, total: pTotal };
   }).filter(p => p.total > 0).sort((a, b) => b.total - a.total);
@@ -68,14 +75,32 @@ const Reports = () => {
           <FileText className="icon" />
           <h1>Reports</h1>
         </div>
-        <div className="month-nav">
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
-            <ChevronLeft />
-          </button>
-          <h2>{format(currentMonth, 'MMMM yyyy')}</h2>
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
-            <ChevronRight />
-          </button>
+        <div className="report-controls">
+          {user.role === 'admin' && (
+            <div className="view-mode-tabs">
+              <button 
+                className={`tab-btn ${viewMode === 'personal' ? 'active' : ''}`}
+                onClick={() => setViewMode('personal')}
+              >
+                <User size={16} /> My Reports
+              </button>
+              <button 
+                className={`tab-btn ${viewMode === 'team' ? 'active' : ''}`}
+                onClick={() => setViewMode('team')}
+              >
+                <Users size={16} /> Team Reports
+              </button>
+            </div>
+          )}
+          <div className="month-nav">
+            <button onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}>
+              <ChevronLeft />
+            </button>
+            <h2>{format(currentMonth, 'MMMM yyyy')}</h2>
+            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+              <ChevronRight />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -176,8 +201,47 @@ const Reports = () => {
           })}
         </div>
       </div>
+
+      {viewMode === 'team' && user.role === 'admin' && (
+        <div className="team-activity-section glass-card">
+          <div className="section-header">
+            <h3><Users className="section-icon" /> Team Activity Detail</h3>
+            <span className="entry-count">{monthEntries.length} entries</span>
+          </div>
+          <div className="team-table-wrapper">
+            <table className="team-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Date</th>
+                  <th>Project</th>
+                  <th>Task</th>
+                  <th>Hours</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthEntries.map(entry => (
+                  <tr key={entry._id}>
+                    <td className="emp-cell">
+                      <div className="emp-avatar">{entry.userId?.name?.charAt(0).toUpperCase()}</div>
+                      <span>{entry.userId?.name}</span>
+                    </td>
+                    <td>{format(new Date(entry.date), 'MMM d, yyyy')}</td>
+                    <td>{entry.projectId?.name || 'Deleted Project'}</td>
+                    <td><span className="task-badge">{entry.taskType}</span></td>
+                    <td className="hours-cell">{formatDuration(entry.duration)}</td>
+                    <td className="notes-cell" title={entry.notes}>{entry.notes || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Reports;
+

@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 import { Briefcase, Plus, LayoutGrid, Calendar, Trash2, Edit2 } from 'lucide-react';
 import './Projects.css';
 
 const Projects = () => {
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState('');
   const [clientOrTask, setClientOrTask] = useState('');
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   const fetchProjects = async () => {
     try {
@@ -28,7 +32,7 @@ const Projects = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name) return;
+    if (!name || !isAdmin) return;
     try {
       await api.post('/api/projects', { name, clientOrTask });
       setName('');
@@ -49,12 +53,14 @@ const Projects = () => {
           <Briefcase className="icon" />
           <h1>Projects</h1>
         </div>
-        <button className="btn btn-orange" onClick={() => setIsAdding(!isAdding)}>
-          <Plus size={18} /> {isAdding ? 'Cancel' : 'New Project'}
-        </button>
+        {isAdmin && (
+          <button className="btn btn-orange" onClick={() => setIsAdding(!isAdding)}>
+            <Plus size={18} /> {isAdding ? 'Cancel' : 'New Project'}
+          </button>
+        )}
       </div>
 
-      {isAdding && (
+      {isAdding && isAdmin && (
         <div className="project-form-card glass-card">
           <h3>Create New Project</h3>
           <form onSubmit={handleSubmit} className="project-form">
@@ -96,7 +102,7 @@ const Projects = () => {
         {projects.length === 0 ? (
           <div className="empty-projects glass-card">
             <Briefcase size={48} className="empty-icon" />
-            <p>No projects found. Create your first project to start tracking time!</p>
+            <p>No projects found. {isAdmin ? 'Create your first project to start tracking time!' : 'Please contact an admin to add projects.'}</p>
           </div>
         ) : (
           <div className="projects-grid">
@@ -107,10 +113,12 @@ const Projects = () => {
                     <h4>{proj.name}</h4>
                     <p>{proj.clientOrTask || 'Internal Task'}</p>
                   </div>
-                  <div className="project-actions">
-                    <button className="action-btn"><Edit2 size={16} /></button>
-                    <button className="action-btn delete"><Trash2 size={16} /></button>
-                  </div>
+                  {isAdmin && (
+                    <div className="project-actions">
+                      <button className="action-btn"><Edit2 size={16} /></button>
+                      <button className="action-btn delete"><Trash2 size={16} /></button>
+                    </div>
+                  )}
                 </div>
                 <div className="project-card-footer">
                   <div className="project-meta">
@@ -129,4 +137,5 @@ const Projects = () => {
 };
 
 export default Projects;
+
 
