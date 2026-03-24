@@ -260,4 +260,41 @@ input:focus, select:focus, textarea:focus {
   border-radius: 24px;
   padding: 32px;
 }
+/* Unified Actions (Edit/Delete) */
+.unified-actions {
+  display: flex;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  width: fit-content;
+  opacity: 1;
+  transition: var(--transition-fast);
+}
 
+.action-btn-mini {
+  padding: 8px 10px;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.action-btn-mini:hover {
+  background: #f1f5f9;
+  color: var(--primary-orange);
+}
+
+.action-btn-mini.delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.action-btn-mini + .action-btn-mini {
+  border-left: 1px solid var(--border-color);
+}

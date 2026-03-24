@@ -141,9 +141,9 @@ const Projects = () => {
                     <p>{proj.clientOrTask || 'Internal Task'}</p>
                   </div>
                   {isAdmin && (
-                    <div className="project-actions">
-                      <button className="action-btn" onClick={() => startEdit(proj)}><Edit2 size={16} /></button>
-                      <button className="action-btn delete" onClick={() => handleDelete(proj._id)}><Trash2 size={16} /></button>
+                    <div className="unified-actions">
+                      <button className="action-btn-mini edit" onClick={() => startEdit(proj)} title="Edit"><Edit2 size={16} /></button>
+                      <button className="action-btn-mini delete" onClick={() => handleDelete(proj._id)} title="Delete"><Trash2 size={16} /></button>
                     </div>
                   )}
                 </div>

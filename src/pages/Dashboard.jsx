@@ -222,13 +222,9 @@ const Dashboard = () => {
                       </div>
                       <div className="entry-right">
                         <span className="duration-text">{formatDurationDisplay(entry.duration)}</span>
-                        <div className="entry-actions">
-                          <button className="entry-action-btn" onClick={() => openEditModal(entry)} title="Edit">
-                            <Edit2 size={16} />
-                          </button>
-                          <button className="entry-action-btn delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete">
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="unified-actions">
+                          <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
+                          <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
                         </div>
                         <div className="entry-status"><CheckCircle2 size={16} /></div>
                       </div>

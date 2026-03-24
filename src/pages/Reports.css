@@ -428,20 +428,30 @@
   color: var(--text-light);
 }
 
-.loading-state {
+.merged-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  font-size: 18px;
-  color: var(--text-light);
+  gap: 12px;
+  margin-top: 32px;
 }
 
-.empty-msg {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-light);
-  font-style: italic;
+.btn-danger-text {
+  margin-left: auto;
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.btn-danger-text:hover {
+  background: #fee2e2;
+}
+
+.report-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .modal-textarea {

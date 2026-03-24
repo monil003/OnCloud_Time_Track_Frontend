@@ -106,26 +106,8 @@
   color: var(--text-light);
 }
 
-.project-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.action-btn {
-  padding: 6px;
-  border-radius: 8px;
-  color: var(--text-light);
-  transition: var(--transition-fast);
-}
-
-.action-btn:hover {
-  background: var(--bg-color);
-  color: var(--text-main);
-}
-
-.action-btn.delete:hover {
-  color: #DC2626;
-  background: #FEF2F2;
+.project-card:hover .unified-actions {
+  opacity: 1;
 }
 
 .project-card-footer {

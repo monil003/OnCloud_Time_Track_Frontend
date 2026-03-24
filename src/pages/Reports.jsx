@@ -385,9 +385,9 @@ const Reports = () => {
                     <td className="hours-cell">{formatDuration(entry.duration)}</td>
                     <td className="notes-cell" title={entry.notes}>{entry.notes || '-'}</td>
                     <td>
-                      <div className="table-actions">
-                        <button className="table-action-btn edit" onClick={() => openEditModal(entry)}><Edit2 size={14} /></button>
-                        <button className="table-action-btn delete" onClick={() => handleDeleteEntry(entry._id)}><Trash2 size={14} /></button>
+                      <div className="unified-actions">
+                        <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
+                        <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -456,12 +456,10 @@ const Reports = () => {
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
-              <div className="modal-footer-left">
-                <button className="btn btn-orange" onClick={handleSaveEntry}>Update entry</button>
-                <button className="btn btn-outline" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
-              </div>
-              <button className="text-btn danger" onClick={() => handleDeleteEntry(editingEntryId)}>Delete</button>
+            <div className="modal-footer merged-footer">
+              <button className="btn btn-orange" onClick={handleSaveEntry}>Update entry</button>
+              <button className="btn btn-outline" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
+              <button className="btn btn-danger-text" onClick={() => handleDeleteEntry(editingEntryId)}>Delete Entry</button>
             </div>
           </div>
         </div>
