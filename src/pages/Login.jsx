@@ -59,6 +59,7 @@ const Login = () => {
               onChange={e => setPassword(e.target.value)} 
               required 
             />
+            <Link to="/forgot-password" className="forgot-password-link">Forgot password?</Link>
           </div>
           <button type="submit" className="btn btn-orange auth-btn" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />

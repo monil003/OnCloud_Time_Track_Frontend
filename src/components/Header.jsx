@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LayoutDashboard, Briefcase, FileText, User as UserIcon, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, User as UserIcon, LogOut, Clock } from 'lucide-react';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
@@ -36,6 +36,9 @@ const Header = () => {
                <UserIcon size={18} /> <span>Users</span>
             </NavLink>
           )}
+          <NavLink to="/timelog" className={({ isActive }) => isActive ? 'active' : ''}>
+            <Clock size={18} /> <span>Time Log</span>
+          </NavLink>
         </nav>
         <div className="user-menu">
           <NavLink to="/profile" className="user-info">

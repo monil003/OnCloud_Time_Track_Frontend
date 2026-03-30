@@ -9,6 +9,8 @@ import Projects from './pages/Projects';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
 import Users from './pages/Users';
+import AdminTimeLog from './pages/AdminTimeLog';
+import ForgotPassword from './pages/ForgotPassword';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -34,6 +36,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -58,6 +61,11 @@ const AppContent = () => {
               <ProtectedAdminRoute>
                 <Users />
               </ProtectedAdminRoute>
+            } />
+            <Route path="/timelog" element={
+              <ProtectedRoute>
+                <AdminTimeLog />
+              </ProtectedRoute>
             } />
           </Routes>
         </main>

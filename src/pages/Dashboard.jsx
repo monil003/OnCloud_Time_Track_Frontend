@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Plus, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2, Edit2, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2, Edit2, Trash2, Download } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -119,6 +119,31 @@ const Dashboard = () => {
     setEditingEntryId(null);
   };
 
+  const handleExportCSV = () => {
+    if (timeEntries.length === 0) return alert('No entries to export');
+    let csv = 'Date,Project,Client,Sub Task,Hours,Notes\n';
+    // Sort by date descending for the export
+    const sorted = [...timeEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+    sorted.forEach(e => {
+      const date = format(new Date(e.date), 'yyyy-MM-dd');
+      const proj = e.projectId?.name || '';
+      const client = e.projectId?.clientOrTask || '';
+      const task = e.taskType || '';
+      const hours = (e.duration / 60).toFixed(2);
+      const notes = (e.notes || '').replace(/"/g, "''").replace(/\n/g, ' | ');
+      csv += `"${date}","${proj}","${client}","${task}",${hours},"${notes}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MyTimeEntries_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   const todayEntries = timeEntries.filter(e => isSameDay(new Date(e.date), currentDate));
   const weekTotalMins = timeEntries.filter(e => {
     const d = new Date(e.date);
@@ -201,11 +226,16 @@ const Dashboard = () => {
           <div className="today-entries-list">
             <div className="entries-list-header">
               <h3>{viewMode === 'day' ? "Today's Entries" : "Weekly Summary"}</h3>
-              {viewMode === 'day' && (
-                <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
-                  <Plus size={18} /> Track Time
+              <div className="entries-header-actions">
+                {viewMode === 'day' && (
+                  <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
+                    <Plus size={18} /> Track Time
+                  </button>
+                )}
+                <button className="export-csv-btn" onClick={handleExportCSV} title="Export all my entries to CSV">
+                  <Download size={16} /> Export CSV
                 </button>
-              )}
+              </div>
             </div>
 
             {viewMode === 'day' ? (
@@ -216,26 +246,44 @@ const Dashboard = () => {
                   <span>- The Rolling Stones</span>
                 </div>
               ) : (
-                <div className="entries-grid">
-                  {todayEntries.map(entry => (
-                    <div className="entry-card glass-card" key={entry._id}>
-                      <div className="entry-main">
-                        <div className="project-badge">
-                          {entry.projectId?.name || 'Internal'}
+                <div className="entries-detail-list">
+                  {todayEntries.map((entry, idx) => {
+                    const noteLines = (entry.notes || '').split('\n').filter(l => l.trim());
+                    return (
+                      <div className="entry-detail-row" key={entry._id}>
+                        <div className="entry-detail-main">
+                          <div className="entry-detail-project">
+                            <strong>{entry.projectId?.name || 'Internal'}</strong>
+                            {entry.projectId?.clientOrTask && (
+                              <span className="entry-client"> ({entry.projectId.clientOrTask})</span>
+                            )}
+                          </div>
+                          <div className="entry-detail-subtask">{entry.taskType}</div>
+                          {entry.notes && (
+                            <>
+                              <div className="entry-detail-label">Description:</div>
+                              <div className="entry-detail-notes">
+                                {noteLines.map((line, i) => (
+                                  <div key={i} className="entry-note-line">{line}</div>
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </div>
-                        <h4 className="entry-title">{entry.projectId?.clientOrTask || 'General Task'}</h4>
-                        <p className="entry-meta">{entry.taskType} • {entry.notes || 'No notes'}</p>
-                      </div>
-                      <div className="entry-right">
-                        <span className="duration-text">{formatDurationDisplay(entry.duration)}</span>
-                        <div className="unified-actions">
-                          <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
-                          <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
+                        <div className="entry-detail-right">
+                          <span className="entry-detail-duration">{formatDurationDisplay(entry.duration)}</span>
+                          <div className="unified-actions">
+                            <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
+                            <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
+                          </div>
                         </div>
-                        <div className="entry-status"><CheckCircle2 size={16} /></div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  <div className="entries-day-total">
+                    <span className="day-total-label">Total:</span>
+                    <span className="day-total-value">{formatDurationDisplay(todayEntries.reduce((a, e) => a + e.duration, 0))}</span>
+                  </div>
                 </div>
               )
             ) : (

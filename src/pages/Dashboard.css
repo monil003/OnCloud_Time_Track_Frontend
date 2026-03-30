@@ -205,6 +205,33 @@
   font-weight: 700;
 }
 
+.entries-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.export-csv-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: var(--surface-color);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.export-csv-btn:hover {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: var(--primary-green-light);
+}
+
 .add-entry-inline-btn {
   display: flex;
   align-items: center;
@@ -230,10 +257,114 @@
   margin-top: 8px;
 }
 
-.entries-grid {
+.entries-detail-list {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.entry-detail-row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+  gap: 24px;
+}
+
+.entry-detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.entry-detail-row:hover {
+  background: var(--bg-color);
+}
+
+.entry-detail-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-detail-project {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.entry-client {
+  font-weight: 400;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.entry-detail-subtask {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.entry-detail-label {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-top: 6px;
+  margin-bottom: 3px;
+}
+
+.entry-detail-notes {
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+.entry-note-line {
+  margin-bottom: 2px;
+}
+
+.entry-detail-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.entry-detail-duration {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-main);
+  min-width: 56px;
+  text-align: right;
+}
+
+.entries-day-total {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 24px;
+  border-top: 2px solid var(--border-color);
+  background: var(--bg-color);
+}
+
+.day-total-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.day-total-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-main);
 }
 
 .entry-card {
