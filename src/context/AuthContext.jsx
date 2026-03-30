@@ -34,11 +34,17 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data.user);
   };
 
+  // Register now returns { requiresVerification: true, email } — does NOT log in
   const register = async (name, email, password) => {
     const res = await api.post('/api/auth/register', { name, email, password });
-    localStorage.setItem('token', res.data.token);
-    setToken(res.data.token);
-    setUser(res.data.user);
+    return res.data; // caller handles navigation
+  };
+
+  // Called after OTP verified — logs the user in automatically
+  const verifyEmailAndLogin = (token, userData) => {
+    localStorage.setItem('token', token);
+    setToken(token);
+    setUser(userData);
   };
 
   const logout = () => {
@@ -48,7 +54,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmailAndLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );
