@@ -121,7 +121,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .main-header {
-  height: 80px;
+  height: 60px;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -146,34 +146,34 @@ input:focus, select:focus, textarea:focus {
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 18px;
   color: var(--text-main);
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   color: var(--primary-orange);
 }
 
 .nav-links {
   display: flex;
-  gap: 32px;
+  gap: 24px;
 }
 
 .nav-links a {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-decoration: none;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-light);
   transition: var(--transition-fast);
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 2px solid transparent;
 }
 
@@ -218,8 +218,8 @@ input:focus, select:focus, textarea:focus {
 .avatar {
   background: var(--primary-orange-light);
   color: var(--primary-orange);
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -227,9 +227,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 .logout-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +247,7 @@ input:focus, select:focus, textarea:focus {
 
 .main-content {
   flex: 1;
-  padding: 40px 0;
+  padding: 24px 0;
 }
 
 /* Glass Card */

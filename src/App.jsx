@@ -8,12 +8,20 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import Users from './pages/Users';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  return children;
+};
+
+const ProtectedAdminRoute = ({ children }) => {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <div>Loading...</div>;
+  if (!user || user.role !== 'admin') return <Navigate to="/" />;
   return children;
 };
 
@@ -45,6 +53,11 @@ const AppContent = () => {
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedAdminRoute>
+                <Users />
+              </ProtectedAdminRoute>
             } />
           </Routes>
         </main>

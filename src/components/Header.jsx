@@ -28,9 +28,14 @@ const Header = () => {
           <NavLink to="/projects" className={({ isActive }) => isActive ? 'active' : ''}>
             <Briefcase size={18} /> Projects
           </NavLink>
-          <NavLink to="/reports" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/reports" className={({ isActive }) =>  isActive ? 'active' : ''}>
             <FileText size={18} /> Reports
           </NavLink>
+          {user.role === 'admin' && (
+            <NavLink to="/users" className={({ isActive }) => isActive ? 'active' : ''}>
+               <UserIcon size={18} /> Users
+            </NavLink>
+          )}
         </nav>
         <div className="user-menu">
           <NavLink to="/profile" className="user-info">
