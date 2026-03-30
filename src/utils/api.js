@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://oncloud-time-track-backend.onrender.com',
+  baseURL: 'https://api.oncloudconsulting.ca/',
 });
 
 // Request interceptor to add the token to every request

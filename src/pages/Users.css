@@ -1,189 +1,278 @@
+/* ============================================
+   Users Page — Employee Management
+   Uses CSS variables from index.css
+   ============================================ */
+
 .users-page-container {
-  padding: 2.5rem 0;
+  padding: 2rem 0;
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* ---- Page Header ---- */
 .users-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .icon-main {
   width: 48px;
   height: 48px;
-  color: #ff5e00;
-  background: white;
+  color: var(--primary-orange);
+  background: var(--surface-color);
   padding: 0.75rem;
-  border-radius: 16px;
-  box-shadow: 0 5px 15px rgba(255, 94, 0, 0.15);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(243, 108, 33, 0.12);
+  flex-shrink: 0;
 }
 
 .header-text h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--text-main);
+  line-height: 1.2;
 }
 
 .header-text p {
-  margin: 0.25rem 0 0;
-  color: #666;
-  font-size: 1.1rem;
+  margin: 0.2rem 0 0;
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+/* ---- Search Bar ---- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
+  gap: 0.65rem;
+  padding: 0.65rem 1.1rem;
   border-radius: 12px;
-  min-width: 300px;
+  border: 1.5px solid var(--border-color);
+  background: var(--surface-color);
+  min-width: 280px;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  color: var(--text-light);
+}
+
+.search-bar:focus-within {
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 4px var(--primary-orange-light);
+  color: var(--primary-orange);
 }
 
 .search-bar input {
   background: none;
   border: none;
-  font-size: 0.95rem;
-  color: #1a1a1a;
+  border-radius: 0;
+  font-size: 0.9rem;
+  color: var(--text-main);
   outline: none;
   width: 100%;
+  padding: 0;
+  box-shadow: none;
 }
 
+.search-bar input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.search-bar input::placeholder {
+  color: var(--text-light);
+}
+
+/* ---- Users Grid ---- */
 .users-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
+/* ---- User Card ---- */
 .user-card {
   padding: 1.5rem;
-  border-radius: 20px;
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  gap: 1.1rem;
+  transition: var(--transition-fast);
+  border: 1.5px solid var(--border-color);
+  background: var(--surface-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .user-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.09);
+  border-color: rgba(243, 108, 33, 0.25);
 }
 
+/* Header row inside card */
 .user-card-header {
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  position: relative;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.user-card-header-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
 }
 
 .user-avatar-initials {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #ff9e00 0%, #ff5e00 100%);
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #d95a10 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.25rem;
-  box-shadow: 0 5px 15px rgba(255, 94, 0, 0.2);
+  font-size: 1.1rem;
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 4px 12px rgba(243, 108, 33, 0.2);
+  flex-shrink: 0;
+}
+
+/* user-info must shrink so long emails don't overflow */
+.user-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .user-info h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-email {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 0.25rem;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  min-width: 0;
+  padding-left: calc(48px + 0.875rem); /* align under name, past avatar */
 }
 
+.user-email span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Role badge — no more absolute positioning */
 .role-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.4rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.65rem;
   border-radius: 20px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-left: auto;
 }
 
 .role-badge.admin {
-  background: rgba(255, 94, 0, 0.1);
-  color: #ff5e00;
+  background: var(--primary-orange-light);
+  color: var(--primary-orange);
 }
 
 .role-badge.user {
-  background: rgba(0, 0, 0, 0.05);
-  color: #666;
+  background: var(--bg-color);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+}
+
+/* Body */
+.user-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.assignment-stats {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.9rem;
+  gap: 0.5rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-main);
 }
 
+/* Project tags preview */
 .assigned-projects-preview {
-  margin-top: 0.75rem;
-  min-height: 2.5rem;
+  min-height: 2.25rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .project-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .project-tag {
-  padding: 0.35rem 0.75rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 0.3rem 0.65rem;
+  background: var(--primary-green-light);
+  border: 1px solid rgba(55, 142, 68, 0.2);
   border-radius: 8px;
-  font-size: 0.75rem;
-  color: #555;
-  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--primary-green);
+  font-weight: 600;
 }
 
 .project-tag-more {
-  padding: 0.35rem 0.5rem;
-  font-size: 0.75rem;
-  color: #ff5e00;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.72rem;
+  color: var(--primary-orange);
   font-weight: 700;
 }
 
 .no-assignments {
-  font-size: 0.85rem;
-  color: #999;
+  font-size: 0.82rem;
+  color: var(--text-light);
   font-style: italic;
 }
 
+/* Footer */
 .user-card-footer {
   margin-top: auto;
 }
@@ -191,38 +280,56 @@
 .btn-full {
   width: 100%;
   justify-content: center;
-  padding: 0.8rem;
+  padding: 0.75rem;
   border-radius: 12px;
+  font-size: 0.9rem;
 }
 
-.loading-state, .empty-results {
+/* ---- Loading / Empty States ---- */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5rem 0;
+  color: var(--text-light);
+  gap: 1rem;
+}
+
+.empty-results {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 5rem 0;
-  color: #666;
+  color: var(--text-light);
   gap: 1rem;
+  font-size: 0.95rem;
 }
 
 .spinner {
-  animation: spin 1s linear infinite;
-  color: #ff5e00;
+  animation: spin-anim 1s linear infinite;
+  color: var(--primary-orange);
 }
 
-@keyframes spin {
+@keyframes spin-anim {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* Responsive adjustment */
+/* ---- Responsive ---- */
 @media (max-width: 768px) {
   .users-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 1.5rem;
+    gap: 1rem;
   }
+
   .search-bar {
     min-width: unset;
+    width: 100%;
+  }
+
+  .users-grid {
+    grid-template-columns: 1fr;
   }
 }

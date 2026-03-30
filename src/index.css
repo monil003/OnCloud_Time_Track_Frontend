@@ -153,10 +153,10 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-main);
 }
 
-.logo-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--primary-orange);
+.logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
 }
 
 .nav-links {
@@ -297,4 +297,78 @@ input:focus, select:focus, textarea:focus {
 
 .action-btn-mini + .action-btn-mini {
   border-left: 1px solid var(--border-color);
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .main-header {
+    height: auto;
+    padding: 10px 0;
+  }
+
+  .header-content {
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .logo {
+    font-size: 16px;
+    margin-right: auto;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 16px;
+    background: var(--surface-color);
+    padding: 8px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .nav-links a {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .nav-links a span {
+    display: none; /* Hide text on very small screens, show only icons */
+  }
+
+  .user-menu {
+    gap: 8px;
+  }
+
+  .user-info {
+    padding: 4px;
+  }
+
+  .user-info span {
+    display: none;
+  }
+
+  .glass-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo span {
+    display: none;
+  }
+  
+  .nav-links a {
+    gap: 0;
+  }
+  
+  .nav-links svg {
+    width: 20px;
+    height: 20px;
+  }
 }

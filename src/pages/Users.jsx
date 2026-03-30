@@ -59,8 +59,8 @@ const Users = () => {
           </div>
         </div>
         <div className="header-actions">
-           <div className="search-bar glass-card">
-              <Search size={18} />
+           <div className="search-bar">
+              <Search size={16} />
               <input 
                 type="text" 
                 placeholder="Search employees..." 
@@ -73,27 +73,29 @@ const Users = () => {
 
       <div className="users-grid">
         {filteredUsers.length === 0 ? (
-          <div className="empty-results glass-card">
+          <div className="empty-results">
             <UserPlus size={48} />
             <p>No employees found matching "{searchTerm}"</p>
           </div>
         ) : (
           filteredUsers.map(u => (
-            <div key={u._id} className="user-card glass-card">
+            <div key={u._id} className="user-card">
               <div className="user-card-header">
-                <div className="user-avatar-initials">
-                  {u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </div>
-                <div className="user-info">
-                  <h3>{u.name}</h3>
-                  <div className="user-email">
-                    <Mail size={14} />
-                    <span>{u.email}</span>
+                <div className="user-card-header-top">
+                  <div className="user-avatar-initials">
+                    {u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </div>
+                  <div className="user-info">
+                    <h3>{u.name}</h3>
+                  </div>
+                  <div className={`role-badge ${u.role}`}>
+                    <Shield size={11} />
+                    <span>{u.role}</span>
                   </div>
                 </div>
-                <div className={`role-badge ${u.role}`}>
-                  <Shield size={12} />
-                  <span>{u.role}</span>
+                <div className="user-email">
+                  <Mail size={12} />
+                  <span>{u.email}</span>
                 </div>
               </div>
 

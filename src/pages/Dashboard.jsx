@@ -14,10 +14,16 @@ const Dashboard = () => {
   
   // Form state
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [taskType, setTaskType] = useState('Programming');
+  const [taskType, setTaskType] = useState('');
   const [notes, setNotes] = useState('');
   const [duration, setDuration] = useState('0:00');
   const [editingEntryId, setEditingEntryId] = useState(null);
+
+  // Derive dynamic sub-task options from the currently selected project
+  const selectedProject = projects.find(p => p._id === selectedProjectId);
+  const subTaskOptions = (selectedProject?.subTasks && selectedProject.subTasks.length > 0)
+    ? selectedProject.subTasks
+    : ['General'];
 
   const fetchInitialData = async () => {
     try {
@@ -107,7 +113,7 @@ const Dashboard = () => {
 
   const resetForm = () => {
     setSelectedProjectId('');
-    setTaskType('Programming');
+    setTaskType('');
     setNotes('');
     setDuration('0:00');
     setEditingEntryId(null);
@@ -270,70 +276,88 @@ const Dashboard = () => {
         </div>
 
       {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingEntryId ? 'Edit Time Entry' : 'Track Time'}</h3>
-              <p>{format(currentDate, 'EEEE, d MMMM')}</p>
+        <div className="modal-overlay" onClick={() => { setIsModalOpen(false); resetForm(); }}>
+          <div className="modal-content compact-modal glass-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header-compact">
+              <h3>{editingEntryId ? 'Edit time entry' : 'New time entry'} for {format(currentDate, 'EEEE, d MMM')}</h3>
             </div>
-            <div className="modal-body">
-              <div className="form-row">
-                <div className="form-group flex-2">
-                  <label>Project / Task</label>
+            
+            <div className="modal-body-compact">
+              <div className="compact-row responsive-row">
+                <div className="compact-form-group flex-1">
+                  <label className="compact-label">Project</label>
                   <select 
                     value={selectedProjectId} 
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedProjectId(e.target.value);
+                      setTaskType(''); // reset when project changes
+                    }}
+                    className="compact-select"
                   >
                     <option value="" disabled>Select project...</option>
                     {projects.map(p => (
-                      <option key={p._id} value={p._id}>{p.name} - {p.clientOrTask}</option>
+                      <option key={p._id} value={p._id}>
+                        {p.name}{p.clientOrTask ? ` - ${p.clientOrTask}` : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
-                <div className="form-group flex-1">
-                  <label>Task Type</label>
+
+                <div className="compact-form-group flex-1">
+                  <label className="compact-label">Sub Task</label>
                   <select 
                     value={taskType} 
                     onChange={(e) => setTaskType(e.target.value)}
+                    className="compact-select"
                   >
-                    <option value="Programming">Programming</option>
-                    <option value="Design">Design</option>
-                    <option value="Research">Research</option>
-                    <option value="NetSuite">NetSuite Support</option>
+                    {!taskType && <option value="" disabled>Select sub task...</option>}
+                    {subTaskOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
                   </select>
                 </div>
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group flex-2">
-                  <label>Notes</label>
-                  <textarea 
-                    placeholder="Work details..." 
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    className="modal-textarea"
-                    rows={4}
-                  />
-                </div>
-                <div className="form-group flex-1">
-                  <label>Duration</label>
+
+                <div className="compact-form-group duration-group">
+                  <label className="compact-label">Hours</label>
                   <input 
                     type="text" 
                     placeholder="0:00" 
                     value={duration}
                     onChange={e => setDuration(e.target.value)}
+                    className="compact-duration-input"
                   />
                 </div>
               </div>
+              
+              <div className="compact-row">
+                <div className="compact-form-group full-width">
+                  <textarea 
+                    placeholder="Notes (optional)" 
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    className="compact-textarea"
+                  />
+                  <span className="textarea-hint">Shift+Return for line break</span>
+                </div>
+              </div>
+
             </div>
-            <div className="modal-footer">
-              <button className="btn btn-orange" onClick={handleSaveEntry}>
-                {editingEntryId ? 'Update Entry' : 'Save Entry'}
-              </button>
-              <button className="btn btn-outline" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
-              <div className="calendar-sync">
-                <Calendar size={16} />
-                <span>Sync Calendar</span>
+
+            <div className="modal-footer-compact">
+              <div className="footer-left">
+                <button className="btn btn-save" onClick={handleSaveEntry}>
+                  {editingEntryId ? 'Update entry' : 'Save entry'}
+                </button>
+                <button className="btn btn-cancel" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
+              </div>
+              <div className="footer-right">
+                <div className="footer-link">
+                  <Calendar size={16} />
+                  <span>Pull in a calendar event</span>
+                </div>
+                {editingEntryId && (
+                  <button className="delete-link" onClick={() => handleDeleteEntry(editingEntryId)}>Delete</button>
+                )}
               </div>
             </div>
           </div>

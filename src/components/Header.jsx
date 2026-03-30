@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Clock, LayoutDashboard, Briefcase, FileText, User as UserIcon, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, User as UserIcon, LogOut } from 'lucide-react';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
@@ -18,22 +18,22 @@ const Header = () => {
     <header className="main-header glass-header">
       <div className="header-content container">
         <div className="logo">
-          <Clock className="logo-icon" />
-          <span>OnCloud Time</span>
+          <img src="/oncloud-logo.png" className="logo-img" alt="OnCloud Consulting Logo" />
+          <span>OnCloud Consulting</span>
         </div>
         <nav className="nav-links">
           <NavLink to="/" className={({ isActive }) =>isActive ? 'active' : ''}>
-            <LayoutDashboard size={18} /> Dashboard
+            <LayoutDashboard size={18} /> <span>Dashboard</span>
           </NavLink>
           <NavLink to="/projects" className={({ isActive }) => isActive ? 'active' : ''}>
-            <Briefcase size={18} /> Projects
+            <Briefcase size={18} /> <span>Projects</span>
           </NavLink>
           <NavLink to="/reports" className={({ isActive }) =>  isActive ? 'active' : ''}>
-            <FileText size={18} /> Reports
+            <FileText size={18} /> <span>Reports</span>
           </NavLink>
           {user.role === 'admin' && (
             <NavLink to="/users" className={({ isActive }) => isActive ? 'active' : ''}>
-               <UserIcon size={18} /> Users
+               <UserIcon size={18} /> <span>Users</span>
             </NavLink>
           )}
         </nav>

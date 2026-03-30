@@ -9,6 +9,7 @@ const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState('');
   const [clientOrTask, setClientOrTask] = useState('');
+  const [subTasksInput, setSubTasksInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -34,11 +35,15 @@ const Projects = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !isAdmin) return;
+    const subTasks = subTasksInput
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
     try {
       if (editingProject) {
-        await api.put(`/api/projects/${editingProject._id}`, { name, clientOrTask });
+        await api.put(`/api/projects/${editingProject._id}`, { name, clientOrTask, subTasks });
       } else {
-        await api.post('/api/projects', { name, clientOrTask });
+        await api.post('/api/projects', { name, clientOrTask, subTasks });
       }
       resetForm();
       fetchProjects();
@@ -61,12 +66,14 @@ const Projects = () => {
     setEditingProject(proj);
     setName(proj.name);
     setClientOrTask(proj.clientOrTask);
+    setSubTasksInput((proj.subTasks || []).join(', '));
     setIsAdding(true);
   };
 
   const resetForm = () => {
     setName('');
     setClientOrTask('');
+    setSubTasksInput('');
     setIsAdding(false);
     setEditingProject(null);
   };
@@ -112,6 +119,15 @@ const Projects = () => {
                 />
               </div>
             </div>
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Sub Tasks <span style={{ fontWeight: 400, opacity: 0.6 }}>(comma separated, e.g. Design, Development, QA)</span></label>
+                <input
+                  type="text"
+                  value={subTasksInput}
+                  onChange={e => setSubTasksInput(e.target.value)}
+                  placeholder="e.g. Programming, Research, Client Support"
+                />
+              </div>
             <div className="form-actions">
               <button type="submit" className="btn btn-primary">{editingProject ? 'Update' : 'Save'} Project</button>
               <button type="button" className="btn btn-outline" onClick={resetForm}>Cancel</button>
@@ -152,7 +168,11 @@ const Projects = () => {
                     <Calendar size={14} />
                     <span>Created {new Date(proj.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <div className="project-status">Active</div>
+                  <div className="project-status">
+                    {proj.subTasks && proj.subTasks.length > 0
+                      ? `${proj.subTasks.length} Sub Task${proj.subTasks.length > 1 ? 's' : ''}`
+                      : 'Active'}
+                  </div>
                 </div>
               </div>
             ))}
