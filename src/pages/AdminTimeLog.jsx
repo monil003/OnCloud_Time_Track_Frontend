@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail } from 'lucide-react';
 import './AdminTimeLog.css';
 
 const AdminTimeLog = () => {
@@ -24,6 +24,123 @@ const AdminTimeLog = () => {
   // Edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
+  
+  // Import modal
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importLines, setImportLines] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
+  
+  const parseCSVLine = (str) => {
+    const result = [];
+    let inQuotes = false;
+    let currentWord = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(currentWord.trim());
+        currentWord = "";
+      } else {
+        currentWord += char;
+      }
+    }
+    result.push(currentWord.trim());
+    return result;
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target.result;
+      const lines = text.split('\n').filter(l => l.trim());
+      const parsedLines = [];
+      
+      // Expected headers: Date, Project, Task, Duration, Notes
+      for (let i = 1; i < lines.length; i++) {
+         const cols = parseCSVLine(lines[i]);
+         if (cols.length >= 4) {
+           const projectNameStr = cols[1]?.toLowerCase() || '';
+           const projNameMatch = allProjects.find(p => p.name.toLowerCase() === projectNameStr);
+           
+           parsedLines.push({
+             index: i,
+             date: cols[0] || '',
+             projectName: cols[1] || '',
+             projectId: projNameMatch ? projNameMatch._id : null,
+             taskType: cols[2] || '',
+             durationStr: cols[3] || '0',
+             durationMins: parseDurationToMins(cols[3] || '0'),
+             notes: cols[4] || ''
+           });
+         }
+      }
+      setImportLines(parsedLines);
+      setIsImportOpen(true);
+    };
+    reader.readAsText(file);
+    e.target.value = null; // reset
+  };
+
+  const confirmImport = async () => {
+    const validLines = importLines.filter(l => l.projectId && l.durationMins > 0);
+    if (!validLines.length) return alert('No valid entries to import. Please check project names and durations.');
+    
+    setImportLoading(true);
+    try {
+      const payload = validLines.map(l => ({
+        date: l.date,
+        projectId: l.projectId,
+        taskType: l.taskType,
+        duration: l.durationMins,
+        notes: l.notes
+      }));
+      
+      await api.post('/api/time-entries/import', { entries: payload });
+      setIsImportOpen(false);
+      setImportLines([]);
+      fetchData(); // reload
+    } catch (err) {
+      console.error(err);
+      alert('Import failed. ' + (err.response?.data?.message || ''));
+    } finally {
+      setImportLoading(false);
+    }
+  };
+  
+  const handleQuickFilter = (type) => {
+    const today = new Date();
+    let start, end;
+    switch(type) {
+      case 'this_week':
+        start = startOfWeek(today, { weekStartsOn: 1 });
+        end = endOfWeek(today, { weekStartsOn: 1 });
+        break;
+      case 'last_week':
+        start = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
+        end = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
+        break;
+      case 'this_month':
+        start = startOfMonth(today);
+        end = endOfMonth(today);
+        break;
+      case 'last_month':
+        start = startOfMonth(subMonths(today, 1));
+        end = endOfMonth(subMonths(today, 1));
+        break;
+      case 'this_year':
+        start = startOfYear(today);
+        end = endOfYear(today);
+        break;
+      default:
+        return;
+    }
+    setStartDate(format(start, 'yyyy-MM-dd'));
+    setEndDate(format(end, 'yyyy-MM-dd'));
+  };
   const [editProjectId, setEditProjectId] = useState('');
   const [editTaskType, setEditTaskType] = useState('');
   const [editNotes, setEditNotes] = useState('');
@@ -163,6 +280,21 @@ const AdminTimeLog = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleEmailTimesheet = async () => {
+    if (filteredEntries.length === 0) return alert('No entries to email for this filter.');
+    try {
+      await api.post('/api/time-entries/email-timesheet', {
+        startDate,
+        endDate,
+        targetUserId: isAdmin ? selectedUserId || undefined : undefined
+      });
+      alert('Timesheet emailed successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send email. ' + (err.response?.data?.message || ''));
+    }
+  };
+
   if (loading) {
     return (
       <div className="atl-loading">
@@ -183,9 +315,28 @@ const AdminTimeLog = () => {
             <p>{isAdmin ? 'View and manage all employee time entries' : 'Filter and review your time entries'}</p>
           </div>
         </div>
-        <button className="atl-export-btn" onClick={handleExport}>
-          <Download size={16} /> Export CSV
-        </button>
+        <div className="atl-header-actions">
+          <button className="atl-export-btn" onClick={handleEmailTimesheet}>
+            <Mail size={16} /> {isAdmin && selectedUserId ? 'Email User' : 'Email Me'}
+          </button>
+          <label className="atl-action-btn atl-action-btn--outline">
+            <Upload size={16} /> Import CSV
+            <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: 'none' }} />
+          </label>
+          <button className="atl-export-btn" onClick={handleExport}>
+            <Download size={16} /> Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Filters */}
+      <div className="atl-quick-filters">
+        <span className="atl-qf-label">Filter:</span>
+        <button className="atl-qf-btn" onClick={() => handleQuickFilter('this_week')}>This Week</button>
+        <button className="atl-qf-btn" onClick={() => handleQuickFilter('last_week')}>Last Week</button>
+        <button className="atl-qf-btn" onClick={() => handleQuickFilter('this_month')}>This Month</button>
+        <button className="atl-qf-btn" onClick={() => handleQuickFilter('last_month')}>Last Month</button>
+        <button className="atl-qf-btn" onClick={() => handleQuickFilter('this_year')}>This Year</button>
       </div>
 
       {/* Filters */}
@@ -303,7 +454,7 @@ const AdminTimeLog = () => {
                   <div className="atl-entry-subtask">{entry.taskType}</div>
                   {noteLines.length > 0 && (
                     <>
-                      <div className="atl-entry-desc-label">Description:</div>
+                      <div className="atl-entry-desc-label">Notes:</div>
                       <div className="atl-entry-notes">
                         {noteLines.map((line, i) => (
                           <div key={i} className="atl-note-line">{line}</div>
@@ -401,6 +552,71 @@ const AdminTimeLog = () => {
               <button className="btn btn-primary" onClick={handleSave}>Update Entry</button>
               <button className="btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
               <button className="atl-delete-btn" onClick={() => handleDelete(editingEntry._id)}>Delete Entry</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {isImportOpen && (
+        <div className="modal-overlay" onClick={() => setIsImportOpen(false)}>
+          <div className="atl-modal import-modal" onClick={e => e.stopPropagation()}>
+            <div className="atl-modal-header">
+              <div>
+                <h3>Review Import</h3>
+                <p>Verify timesheet entries before importing</p>
+              </div>
+              <button className="apm-close-btn" onClick={() => setIsImportOpen(false)}>✕</button>
+            </div>
+            <div className="atl-modal-body">
+              <div className="import-table-container">
+                <table className="import-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Project</th>
+                      <th>Task</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importLines.map((line, i) => (
+                      <tr key={i} className={!line.projectId ? 'import-error-row' : ''}>
+                        <td>{line.date}</td>
+                        <td>{line.projectName}</td>
+                        <td>{line.taskType}</td>
+                        <td>{line.durationStr}</td>
+                        <td>
+                          {line.projectId ? (
+                            <span className="import-status-ok">Valid</span>
+                          ) : (
+                            <span className="import-status-err">Not found</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="import-summary">
+                Valid entries: {importLines.filter(l => l.projectId).length} / {importLines.length}
+                {importLines.filter(l => !l.projectId).length > 0 && (
+                  <div className="import-warning">
+                    <AlertCircle size={14} /> Unrecognized projects will be ignored.
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="atl-modal-footer">
+              <button 
+                className="btn btn-primary" 
+                onClick={confirmImport}
+                disabled={importLoading || importLines.filter(l => l.projectId).length === 0}
+              >
+                {importLoading ? 'Importing...' : 'Confirm Import'}
+              </button>
+              <button className="btn btn-outline" onClick={() => setIsImportOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>

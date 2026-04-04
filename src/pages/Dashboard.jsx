@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
-  
+
   // Form state
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [taskType, setTaskType] = useState('');
@@ -166,8 +166,8 @@ const Dashboard = () => {
               <label htmlFor="dashboard-date-picker" className="date-picker-icon" title="Jump to date">
                 <Calendar size={18} />
               </label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 id="dashboard-date-picker"
                 className="hidden-date-input"
                 value={format(currentDate, 'yyyy-MM-dd')}
@@ -180,13 +180,13 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="view-mode-toggle glass-card">
-          <button 
+          <button
             className={`toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
             onClick={() => setViewMode('day')}
           >
             Day
           </button>
-          <button 
+          <button
             className={`toggle-btn ${viewMode === 'week' ? 'active' : ''}`}
             onClick={() => setViewMode('week')}
           >
@@ -202,11 +202,11 @@ const Dashboard = () => {
               const isActive = isSameDay(day, currentDate);
               const dayEntries = timeEntries.filter(e => isSameDay(new Date(e.date), day));
               const dayTotal = dayEntries.reduce((acc, curr) => acc + curr.duration, 0);
-              
+
               return (
-                <div 
-                  key={day.toISOString()} 
-                  className={`day-column ${isActive ? 'active' : ''}`} 
+                <div
+                  key={day.toISOString()}
+                  className={`day-column ${isActive ? 'active' : ''}`}
                   onClick={() => setCurrentDate(day)}
                 >
                   <div className="day-label">{format(day, 'eee')}</div>
@@ -223,105 +223,105 @@ const Dashboard = () => {
           </div>
         </div>
 
-          <div className="today-entries-list">
-            <div className="entries-list-header">
-              <h3>{viewMode === 'day' ? "Today's Entries" : "Weekly Summary"}</h3>
-              <div className="entries-header-actions">
-                {viewMode === 'day' && (
-                  <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} /> Track Time
-                  </button>
-                )}
-                <button className="export-csv-btn" onClick={handleExportCSV} title="Export all my entries to CSV">
-                  <Download size={16} /> Export CSV
+        <div className="today-entries-list">
+          <div className="entries-list-header">
+            <h3>{viewMode === 'day' ? "Today's Entries" : "Weekly Summary"}</h3>
+            <div className="entries-header-actions">
+              {viewMode === 'day' && (
+                <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
+                  <Plus size={18} /> Track Time
                 </button>
-              </div>
+              )}
+              <button className="export-csv-btn" onClick={handleExportCSV} title="Export all my entries to CSV">
+                <Download size={16} /> Export CSV
+              </button>
             </div>
+          </div>
 
-            {viewMode === 'day' ? (
-              todayEntries.length === 0 ? (
-                <div className="empty-dashboard glass-card">
-                  <Clock className="empty-icon" size={48} />
-                  <p>"Time is on my side, yes it is."</p>
-                  <span>- The Rolling Stones</span>
-                </div>
-              ) : (
-                <div className="entries-detail-list">
-                  {todayEntries.map((entry, idx) => {
-                    const noteLines = (entry.notes || '').split('\n').filter(l => l.trim());
-                    return (
-                      <div className="entry-detail-row" key={entry._id}>
-                        <div className="entry-detail-main">
-                          <div className="entry-detail-project">
-                            <strong>{entry.projectId?.name || 'Internal'}</strong>
-                            {entry.projectId?.clientOrTask && (
-                              <span className="entry-client"> ({entry.projectId.clientOrTask})</span>
-                            )}
-                          </div>
-                          <div className="entry-detail-subtask">{entry.taskType}</div>
-                          {entry.notes && (
-                            <>
-                              <div className="entry-detail-label">Description:</div>
-                              <div className="entry-detail-notes">
-                                {noteLines.map((line, i) => (
-                                  <div key={i} className="entry-note-line">{line}</div>
-                                ))}
-                              </div>
-                            </>
+          {viewMode === 'day' ? (
+            todayEntries.length === 0 ? (
+              <div className="empty-dashboard glass-card">
+                <Clock className="empty-icon" size={48} />
+                <p>"Time is on my side, yes it is."</p>
+                <span>- The Rolling Stones</span>
+              </div>
+            ) : (
+              <div className="entries-detail-list">
+                {todayEntries.map((entry, idx) => {
+                  const noteLines = (entry.notes || '').split('\n').filter(l => l.trim());
+                  return (
+                    <div className="entry-detail-row" key={entry._id}>
+                      <div className="entry-detail-main">
+                        <div className="entry-detail-project">
+                          <strong>{entry.projectId?.name || 'Internal'}</strong>
+                          {entry.projectId?.clientOrTask && (
+                            <span className="entry-client"> ({entry.projectId.clientOrTask})</span>
                           )}
                         </div>
-                        <div className="entry-detail-right">
-                          <span className="entry-detail-duration">{formatDurationDisplay(entry.duration)}</span>
-                          <div className="unified-actions">
-                            <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
-                            <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
-                          </div>
+                        <div className="entry-detail-subtask">{entry.taskType}</div>
+                        {entry.notes && (
+                          <>
+                            <div className="entry-detail-label">Notes:</div>
+                            <div className="entry-detail-notes">
+                              {noteLines.map((line, i) => (
+                                <div key={i} className="entry-note-line">{line}</div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="entry-detail-right">
+                        <span className="entry-detail-duration">{formatDurationDisplay(entry.duration)}</span>
+                        <div className="unified-actions">
+                          <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
+                          <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
                         </div>
-                      </div>
-                    );
-                  })}
-                  <div className="entries-day-total">
-                    <span className="day-total-label">Total:</span>
-                    <span className="day-total-value">{formatDurationDisplay(todayEntries.reduce((a, e) => a + e.duration, 0))}</span>
-                  </div>
-                </div>
-              )
-            ) : (
-              // Week View Summary
-              <div className="week-summary-grid">
-                {projects.map(proj => {
-                  const projWeekEntries = timeEntries.filter(e => {
-                    const d = new Date(e.date);
-                    return (e.projectId?._id === proj._id || e.projectId === proj._id) && d >= weekStart && d <= addDays(weekStart, 6);
-                  });
-                  const projTotal = projWeekEntries.reduce((acc, curr) => acc + curr.duration, 0);
-                  
-                  if (projTotal === 0) return null;
-
-                  return (
-                    <div key={proj._id} className="week-project-card glass-card">
-                      <div className="week-project-info">
-                        <div className="project-badge">{proj.name}</div>
-                        <h4>{proj.clientOrTask || 'Internal Task'}</h4>
-                        <p>{projWeekEntries.length} entries this week</p>
-                      </div>
-                      <div className="week-project-total">
-                        <span className="label">Total</span>
-                        <span className="value">{formatDurationDisplay(projTotal)}</span>
                       </div>
                     </div>
                   );
                 })}
-                {weekTotalMins === 0 && (
-                  <div className="empty-dashboard glass-card">
-                    <Calendar className="empty-icon" size={48} />
-                    <p>No time tracked yet for this week.</p>
-                  </div>
-                )}
+                <div className="entries-day-total">
+                  <span className="day-total-label">Total:</span>
+                  <span className="day-total-value">{formatDurationDisplay(todayEntries.reduce((a, e) => a + e.duration, 0))}</span>
+                </div>
               </div>
-            )}
-          </div>
+            )
+          ) : (
+            // Week View Summary
+            <div className="week-summary-grid">
+              {projects.map(proj => {
+                const projWeekEntries = timeEntries.filter(e => {
+                  const d = new Date(e.date);
+                  return (e.projectId?._id === proj._id || e.projectId === proj._id) && d >= weekStart && d <= addDays(weekStart, 6);
+                });
+                const projTotal = projWeekEntries.reduce((acc, curr) => acc + curr.duration, 0);
+
+                if (projTotal === 0) return null;
+
+                return (
+                  <div key={proj._id} className="week-project-card glass-card">
+                    <div className="week-project-info">
+                      <div className="project-badge">{proj.name}</div>
+                      <h4>{proj.clientOrTask || 'Internal Task'}</h4>
+                      <p>{projWeekEntries.length} entries this week</p>
+                    </div>
+                    <div className="week-project-total">
+                      <span className="label">Total</span>
+                      <span className="value">{formatDurationDisplay(projTotal)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {weekTotalMins === 0 && (
+                <div className="empty-dashboard glass-card">
+                  <Calendar className="empty-icon" size={48} />
+                  <p>No time tracked yet for this week.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => { setIsModalOpen(false); resetForm(); }}>
@@ -329,13 +329,13 @@ const Dashboard = () => {
             <div className="modal-header-compact">
               <h3>{editingEntryId ? 'Edit time entry' : 'New time entry'} for {format(currentDate, 'EEEE, d MMM')}</h3>
             </div>
-            
+
             <div className="modal-body-compact">
               <div className="compact-row responsive-row">
                 <div className="compact-form-group flex-1">
                   <label className="compact-label">Project</label>
-                  <select 
-                    value={selectedProjectId} 
+                  <select
+                    value={selectedProjectId}
                     onChange={(e) => {
                       setSelectedProjectId(e.target.value);
                       setTaskType(''); // reset when project changes
@@ -353,8 +353,8 @@ const Dashboard = () => {
 
                 <div className="compact-form-group flex-1">
                   <label className="compact-label">Sub Task</label>
-                  <select 
-                    value={taskType} 
+                  <select
+                    value={taskType}
                     onChange={(e) => setTaskType(e.target.value)}
                     className="compact-select"
                   >
@@ -367,20 +367,20 @@ const Dashboard = () => {
 
                 <div className="compact-form-group duration-group">
                   <label className="compact-label">Hours</label>
-                  <input 
-                    type="text" 
-                    placeholder="0:00" 
+                  <input
+                    type="text"
+                    placeholder="0:00"
                     value={duration}
                     onChange={e => setDuration(e.target.value)}
                     className="compact-duration-input"
                   />
                 </div>
               </div>
-              
+
               <div className="compact-row">
                 <div className="compact-form-group full-width">
-                  <textarea 
-                    placeholder="Notes (optional)" 
+                  <textarea
+                    placeholder="Notes (optional)"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     className="compact-textarea"
