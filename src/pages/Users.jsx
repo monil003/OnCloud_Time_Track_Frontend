@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { Users as UsersIcon, Search, Mail, Shield, Briefcase, Settings2, Loader2, UserPlus } from 'lucide-react';
+import { Users as UsersIcon, Search, Mail, Shield, Briefcase, Settings2, Loader2, UserPlus, Trash2, Filter, UserCheck, UserMinus, Power } from 'lucide-react';
 import AssignProjectsModal from '../components/AssignProjectsModal';
 import './Users.css';
 
@@ -13,10 +13,12 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [statusFilter, setStatusFilter] = useState('active'); // active, inactive, all
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/users');
+      const res = await api.get(`/api/users?status=${statusFilter}`);
       setUsers(res.data);
     } catch (err) {
       console.error('Error fetching users', err);
@@ -27,11 +29,28 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [statusFilter]);
 
   const handleAssignProjects = (user) => {
     setSelectedUser(user);
     setIsModalOpen(true);
+  };
+
+  const handleStatusToggle = async (userId, currentActive, userName) => {
+    const action = currentActive ? 'deactivate' : 'reactivate';
+    const confirmMessage = currentActive 
+      ? `Are you sure you want to deactivate ${userName}? They will no longer be able to log in, but their data will be preserved.`
+      : `Reactivate ${userName}? They will regain access to the application.`;
+
+    if (window.confirm(confirmMessage)) {
+      try {
+        await api.put(`/api/users/${userId}/status`, { active: !currentActive });
+        fetchUsers();
+      } catch (err) {
+        console.error('Error updating user status', err);
+        alert(`Failed to ${action} employee. Please try again.`);
+      }
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -59,6 +78,18 @@ const Users = () => {
           </div>
         </div>
         <div className="header-actions">
+           <div className="filter-group">
+              <Filter size={16} className="filter-icon" />
+              <select 
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="status-select"
+              >
+                <option value="active">Active Employees</option>
+                <option value="inactive">Inactive Employees</option>
+                <option value="all">All Employees</option>
+              </select>
+           </div>
            <div className="search-bar">
               <Search size={16} />
               <input 
@@ -75,11 +106,11 @@ const Users = () => {
         {filteredUsers.length === 0 ? (
           <div className="empty-results">
             <UserPlus size={48} />
-            <p>No employees found matching "{searchTerm}"</p>
+            <p>No {statusFilter !== 'all' ? statusFilter : ''} employees found matching "{searchTerm}"</p>
           </div>
         ) : (
           filteredUsers.map(u => (
-            <div key={u._id} className="user-card">
+            <div key={u._id} className={`user-card ${u.active === false ? 'inactive' : ''}`}>
               <div className="user-card-header">
                 <div className="user-card-header-top">
                   <div className="user-avatar-initials">
@@ -88,9 +119,16 @@ const Users = () => {
                   <div className="user-info">
                     <h3>{u.name}</h3>
                   </div>
-                  <div className={`role-badge ${u.role}`}>
-                    <Shield size={11} />
-                    <span>{u.role}</span>
+                  <div className="badges">
+                    {u.active === false && (
+                      <div className="status-badge inactive">
+                        Inactive
+                      </div>
+                    )}
+                    <div className={`role-badge ${u.role}`}>
+                      <Shield size={11} />
+                      <span>{u.role}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="user-email">
@@ -127,10 +165,17 @@ const Users = () => {
 
               <div className="user-card-footer">
                 <button 
-                  className="btn btn-primary btn-full" 
+                  className="btn btn-primary btn-assign" 
                   onClick={() => handleAssignProjects(u)}
                 >
                   <Settings2 size={16} /> Manage Projects
+                </button>
+                <button 
+                  className={`btn ${u.active === false ? 'btn-success' : 'btn-danger'} btn-status`}
+                  onClick={() => handleStatusToggle(u._id, u.active !== false, u.name)}
+                  title={u.active === false ? 'Reactivate Employee' : 'Deactivate Employee'}
+                >
+                  <Power size={16} />
                 </button>
               </div>
             </div>
