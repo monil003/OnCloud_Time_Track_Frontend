@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear } from 'date-fns';
-import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail } from 'lucide-react';
+import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail, ArrowUpDown, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import './AdminTimeLog.css';
 
 const AdminTimeLog = () => {
@@ -20,6 +20,7 @@ const AdminTimeLog = () => {
   const [selectedProjectName, setSelectedProjectName] = useState('');
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
 
   // Edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -153,10 +154,10 @@ const AdminTimeLog = () => {
 
       let entriesUrl;
       if (isAdmin) {
-        entriesUrl = `/api/time-entries/admin?startDate=${startDate}&endDate=${endDate}`;
+        entriesUrl = `/api/time-entries/admin?startDate=${startDate}&endDate=${endDate}&sort=${sortOrder}`;
         if (selectedUserId) entriesUrl += `&userId=${selectedUserId}`;
       } else {
-        entriesUrl = `/api/time-entries?startDate=${startDate}&endDate=${endDate}`;
+        entriesUrl = `/api/time-entries?startDate=${startDate}&endDate=${endDate}&sort=${sortOrder}`;
       }
 
       const requests = [
@@ -178,7 +179,7 @@ const AdminTimeLog = () => {
 
   useEffect(() => {
     fetchData();
-  }, [startDate, endDate, selectedUserId]);
+  }, [startDate, endDate, selectedUserId, sortOrder]);
 
   // ---- Unique project names for filter (from actual entries returned) ----
   const uniqueProjectNames = useMemo(() => {
@@ -372,6 +373,18 @@ const AdminTimeLog = () => {
         <div className="atl-filter-group">
           <label><CalendarRange size={14} /> To</label>
           <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+        </div>
+
+        <div className="atl-filter-group" style={{ flex: '0 0 auto', minWidth: '100px' }}>
+          <label><ArrowUpDown size={14} /> Sort</label>
+          <button 
+            className="atl-action-btn" 
+            style={{ width: '100%', justifyContent: 'center', height: '40px' }}
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? <ArrowUpAZ size={16} /> : <ArrowDownAZ size={16} />}
+            {sortOrder === 'asc' ? 'Asc' : 'Desc'}
+          </button>
         </div>
       </div>
 
