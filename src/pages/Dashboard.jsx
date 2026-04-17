@@ -18,6 +18,12 @@ const Dashboard = () => {
   const [notes, setNotes] = useState('');
   const [duration, setDuration] = useState('0:00');
   const [editingEntryId, setEditingEntryId] = useState(null);
+  const [initialFormState, setInitialFormState] = useState({
+    projectId: '',
+    taskType: '',
+    notes: '',
+    duration: '0:00'
+  });
 
   // Derive dynamic sub-task options from the currently selected project
   const selectedProject = projects.find(p => p._id === selectedProjectId);
@@ -103,12 +109,40 @@ const Dashboard = () => {
   };
 
   const openEditModal = (entry) => {
+    const projId = entry.projectId?._id || entry.projectId;
+    const durStr = formatDurationDisplay(entry.duration);
+    const entryNotes = entry.notes || '';
+    
     setEditingEntryId(entry._id);
-    setSelectedProjectId(entry.projectId?._id || entry.projectId);
+    setSelectedProjectId(projId);
     setTaskType(entry.taskType);
-    setNotes(entry.notes);
-    setDuration(formatDurationDisplay(entry.duration));
+    setNotes(entryNotes);
+    setDuration(durStr);
+    
+    setInitialFormState({
+      projectId: projId,
+      taskType: entry.taskType,
+      notes: entryNotes,
+      duration: durStr
+    });
     setIsModalOpen(true);
+  };
+
+  const isFormDirty = () => {
+    return selectedProjectId !== initialFormState.projectId ||
+           taskType !== initialFormState.taskType ||
+           notes !== initialFormState.notes ||
+           duration !== initialFormState.duration;
+  };
+
+  const handleCloseModal = () => {
+    if (isFormDirty()) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to close?")) {
+        return;
+      }
+    }
+    setIsModalOpen(false);
+    resetForm();
   };
 
   const resetForm = () => {
@@ -228,7 +262,11 @@ const Dashboard = () => {
             <h3>{viewMode === 'day' ? "Today's Entries" : "Weekly Summary"}</h3>
             <div className="entries-header-actions">
               {viewMode === 'day' && (
-                <button className="add-entry-inline-btn" onClick={() => setIsModalOpen(true)}>
+                <button className="add-entry-inline-btn" onClick={() => {
+                  setInitialFormState({ projectId: '', taskType: '', notes: '', duration: '0:00' });
+                  resetForm();
+                  setIsModalOpen(true);
+                }}>
                   <Plus size={18} /> Track Time
                 </button>
               )}
@@ -324,7 +362,7 @@ const Dashboard = () => {
       </div>
 
       {isModalOpen && (
-        <div className="modal-overlay" onClick={() => { setIsModalOpen(false); resetForm(); }}>
+        <div className="modal-overlay">
           <div className="modal-content compact-modal glass-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header-compact">
               <h3>{editingEntryId ? 'Edit time entry' : 'New time entry'} for {format(currentDate, 'EEEE, d MMM')}</h3>
@@ -396,7 +434,7 @@ const Dashboard = () => {
                 <button className="btn btn-save" onClick={handleSaveEntry}>
                   {editingEntryId ? 'Update entry' : 'Save entry'}
                 </button>
-                <button className="btn btn-cancel" onClick={() => { setIsModalOpen(false); resetForm(); }}>Cancel</button>
+                <button className="btn btn-cancel" onClick={handleCloseModal}>Cancel</button>
               </div>
               <div className="footer-right">
                 <div className="footer-link">

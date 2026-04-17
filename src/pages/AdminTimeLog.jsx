@@ -146,6 +146,12 @@ const AdminTimeLog = () => {
   const [editTaskType, setEditTaskType] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editDuration, setEditDuration] = useState('0:00');
+  const [initialFormState, setInitialFormState] = useState({
+    projectId: '',
+    taskType: '',
+    notes: '',
+    duration: '0:00'
+  });
 
   // ---- Data fetching ----
   const fetchData = async () => {
@@ -197,6 +203,38 @@ const AdminTimeLog = () => {
   const totalMins = filteredEntries.reduce((acc, e) => acc + e.duration, 0);
   const totalFormatted = `${Math.floor(totalMins / 60)}:${(totalMins % 60).toString().padStart(2, '0')}`;
 
+  // ---- Grouping entries by day ----
+  const groupedEntries = useMemo(() => {
+    const groups = {};
+    filteredEntries.forEach(entry => {
+      const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(entry);
+    });
+    
+    // Maintain the sort order of the original filteredEntries
+    // We can do this by iterating through unique date keys in the order they first appear
+    const orderedKeys = [];
+    filteredEntries.forEach(entry => {
+      const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
+      if (!orderedKeys.includes(dateKey)) orderedKeys.push(dateKey);
+    });
+
+    return orderedKeys.map(key => {
+      const dayEntries = groups[key];
+      const dayTotalMins = dayEntries.reduce((sum, e) => sum + e.duration, 0);
+      const uniqueEmps = new Set(dayEntries.map(e => e.userId?._id)).size;
+      
+      return {
+        date: key,
+        entries: dayEntries,
+        totalHours: `${Math.floor(dayTotalMins / 60)}:${(dayTotalMins % 60).toString().padStart(2, '0')}`,
+        entryCount: dayEntries.length,
+        employeeCount: uniqueEmps
+      };
+    });
+  }, [filteredEntries]);
+
   // ---- Helpers ----
   const formatDuration = (mins) => {
     const h = Math.floor(mins / 60);
@@ -212,12 +250,40 @@ const AdminTimeLog = () => {
 
   // ---- Edit ----
   const openEdit = (entry) => {
+    const projId = entry.projectId?._id || entry.projectId;
+    const task = entry.taskType;
+    const notes = entry.notes || '';
+    const dur = formatDuration(entry.duration);
+
     setEditingEntry(entry);
-    setEditProjectId(entry.projectId?._id || entry.projectId);
-    setEditTaskType(entry.taskType);
-    setEditNotes(entry.notes || '');
-    setEditDuration(formatDuration(entry.duration));
+    setEditProjectId(projId);
+    setEditTaskType(task);
+    setEditNotes(notes);
+    setEditDuration(dur);
+
+    setInitialFormState({
+      projectId: projId,
+      taskType: task,
+      notes: notes,
+      duration: dur
+    });
     setIsModalOpen(true);
+  };
+
+  const isFormDirty = () => {
+    return editProjectId !== initialFormState.projectId ||
+           editTaskType !== initialFormState.taskType ||
+           editNotes !== initialFormState.notes ||
+           editDuration !== initialFormState.duration;
+  };
+
+  const handleCloseEdit = () => {
+    if (isFormDirty()) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to close?")) {
+        return;
+      }
+    }
+    setIsModalOpen(false);
   };
 
   const handleSave = async () => {
@@ -429,69 +495,95 @@ const AdminTimeLog = () => {
         </div>
       ) : (
         <div className="atl-detail-list">
-          {filteredEntries.map(entry => {
-            const noteLines = (entry.notes || '').split('\n').filter(l => l.trim());
-            return (
-              <div
-                className={`atl-entry-row ${isAdmin ? 'atl-entry-row--admin' : 'atl-entry-row--user'}`}
-                key={entry._id}
-              >
-                {/* Employee column — admin only */}
-                {isAdmin && (
-                  <div className="atl-entry-emp">
-                    <div className="atl-emp-avatar">
-                      {entry.userId?.name?.charAt(0).toUpperCase()}
+          {groupedEntries.map(group => (
+            <div key={group.date} className="atl-day-group">
+              <div className="atl-day-header">
+                <div className="atl-day-date">
+                  {format(new Date(group.date + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
+                </div>
+                <div className="atl-day-stats-row">
+                  <div className="atl-day-mini-stat">
+                    <span>Hours</span>
+                    <strong>{group.totalHours}</strong>
+                  </div>
+                  <div className="atl-day-mini-stat">
+                    <span>Entries</span>
+                    <strong>{group.entryCount}</strong>
+                  </div>
+                  {isAdmin && (
+                    <div className="atl-day-mini-stat">
+                      <span>Employees</span>
+                      <strong>{group.employeeCount}</strong>
                     </div>
-                    <div className="atl-emp-meta">
-                      <span className="atl-emp-name">{entry.userId?.name || 'Unknown'}</span>
-                      <span className="atl-emp-date">{format(new Date(entry.date), 'MMM d, yyyy')}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Date — user view (since no employee column) */}
-                {!isAdmin && (
-                  <div className="atl-entry-date-col">
-                    <span className="atl-user-date">{format(new Date(entry.date), 'MMM d, yyyy')}</span>
-                  </div>
-                )}
-
-                {/* Entry detail */}
-                <div className="atl-entry-main">
-                  <div className="atl-entry-project">
-                    <strong>{entry.projectId?.name || 'Internal'}</strong>
-                    {entry.projectId?.clientOrTask && (
-                      <span className="atl-entry-client"> ({entry.projectId.clientOrTask})</span>
-                    )}
-                  </div>
-                  <div className="atl-entry-subtask">{entry.taskType}</div>
-                  {noteLines.length > 0 && (
-                    <>
-                      <div className="atl-entry-desc-label">Notes:</div>
-                      <div className="atl-entry-notes">
-                        {noteLines.map((line, i) => (
-                          <div key={i} className="atl-note-line">{line}</div>
-                        ))}
-                      </div>
-                    </>
                   )}
                 </div>
-
-                {/* Right: duration + actions */}
-                <div className="atl-entry-right">
-                  <span className="atl-entry-duration">{formatDuration(entry.duration)}</span>
-                  <div className="unified-actions">
-                    <button className="action-btn-mini edit" onClick={() => openEdit(entry)} title="Edit">
-                      <Edit2 size={14} />
-                    </button>
-                    <button className="action-btn-mini delete" onClick={() => handleDelete(entry._id)} title="Delete">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
               </div>
-            );
-          })}
+
+              {group.entries.map(entry => {
+                const noteLines = (entry.notes || '').split('\n').filter(l => l.trim());
+                return (
+                  <div
+                    className={`atl-entry-row ${isAdmin ? 'atl-entry-row--admin' : 'atl-entry-row--user'}`}
+                    key={entry._id}
+                  >
+                    {/* Employee column — admin only */}
+                    {isAdmin && (
+                      <div className="atl-entry-emp">
+                        <div className="atl-emp-avatar">
+                          {entry.userId?.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="atl-emp-meta">
+                          <span className="atl-emp-name">{entry.userId?.name || 'Unknown'}</span>
+                          <span className="atl-emp-date">{format(new Date(entry.date), 'h:mm a')}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Date — user view (since no employee column) */}
+                    {!isAdmin && (
+                      <div className="atl-entry-date-col">
+                        <span className="atl-user-date">{format(new Date(entry.date), 'h:mm a')}</span>
+                      </div>
+                    )}
+
+                    {/* Entry detail */}
+                    <div className="atl-entry-main">
+                      <div className="atl-entry-project">
+                        <strong>{entry.projectId?.name || 'Internal'}</strong>
+                        {entry.projectId?.clientOrTask && (
+                          <span className="atl-entry-client"> ({entry.projectId.clientOrTask})</span>
+                        )}
+                      </div>
+                      <div className="atl-entry-subtask">{entry.taskType}</div>
+                      {noteLines.length > 0 && (
+                        <>
+                          <div className="atl-entry-desc-label">Notes:</div>
+                          <div className="atl-entry-notes">
+                            {noteLines.map((line, i) => (
+                              <div key={i} className="atl-note-line">{line}</div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Right: duration + actions */}
+                    <div className="atl-entry-right">
+                      <span className="atl-entry-duration">{formatDuration(entry.duration)}</span>
+                      <div className="unified-actions">
+                        <button className="action-btn-mini edit" onClick={() => openEdit(entry)} title="Edit">
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="action-btn-mini delete" onClick={() => handleDelete(entry._id)} title="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
 
           {/* Total footer */}
           <div className="atl-list-total">
@@ -503,7 +595,7 @@ const AdminTimeLog = () => {
 
       {/* Edit Modal */}
       {isModalOpen && editingEntry && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+        <div className="modal-overlay">
           <div className="atl-modal" onClick={e => e.stopPropagation()}>
             <div className="atl-modal-header">
               <div>
@@ -516,7 +608,7 @@ const AdminTimeLog = () => {
                   {format(new Date(editingEntry.date), 'MMM d, yyyy')}
                 </p>
               </div>
-              <button className="apm-close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
+              <button className="apm-close-btn" onClick={handleCloseEdit}>✕</button>
             </div>
             <div className="atl-modal-body">
               <div className="atl-modal-row">
@@ -563,7 +655,7 @@ const AdminTimeLog = () => {
             </div>
             <div className="atl-modal-footer">
               <button className="btn btn-primary" onClick={handleSave}>Update Entry</button>
-              <button className="btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button className="btn btn-outline" onClick={handleCloseEdit}>Cancel</button>
               <button className="atl-delete-btn" onClick={() => handleDelete(editingEntry._id)}>Delete Entry</button>
             </div>
           </div>
@@ -572,7 +664,7 @@ const AdminTimeLog = () => {
 
       {/* Import Modal */}
       {isImportOpen && (
-        <div className="modal-overlay" onClick={() => setIsImportOpen(false)}>
+        <div className="modal-overlay">
           <div className="atl-modal import-modal" onClick={e => e.stopPropagation()}>
             <div className="atl-modal-header">
               <div>

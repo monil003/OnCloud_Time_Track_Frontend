@@ -270,13 +270,73 @@
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible; /* changed from hidden to allow sticky header to show rounded corners correctly if needed, or just keep it hidden if we use border-radius on container */
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.atl-day-group {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.atl-day-group:last-child {
+  border-bottom: none;
+}
+
+.atl-day-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.atl-day-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.atl-day-date {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary-orange);
+  min-width: 160px;
+}
+
+.atl-day-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.atl-day-mini-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.atl-day-mini-stat strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
 }
 
 .atl-entry-row {
   display: grid;
   gap: 24px;
+/* ... rest of the file ... */
   align-items: flex-start;
   padding: 18px 24px;
   border-bottom: 1px solid var(--border-color);
