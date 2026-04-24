@@ -5,6 +5,22 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, sub
 import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail, ArrowUpDown, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import './AdminTimeLog.css';
 
+const getEntryDateStr = (dateString) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  } else {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+};
+
 const AdminTimeLog = () => {
   const { user } = useContext(AuthContext);
   const isAdmin = user?.role === 'admin';
@@ -207,8 +223,8 @@ const AdminTimeLog = () => {
   const groupedEntries = useMemo(() => {
     const groups = {};
     filteredEntries.forEach(entry => {
-      // Use local date string instead of UTC date part to avoid timezone shifts
-      const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
+      // Use exact string without timezone shift to avoid date shifting
+      const dateKey = getEntryDateStr(entry.date);
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(entry);
     });
@@ -216,7 +232,7 @@ const AdminTimeLog = () => {
     // Maintain the sort order of the original filteredEntries
     const orderedKeys = [];
     filteredEntries.forEach(entry => {
-      const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
+      const dateKey = getEntryDateStr(entry.date);
       if (!orderedKeys.includes(dateKey)) orderedKeys.push(dateKey);
     });
 
@@ -323,7 +339,7 @@ const AdminTimeLog = () => {
       : 'Date,Project,Client,Sub Task,Hours,Notes\n';
     let csv = headers;
     filteredEntries.forEach(e => {
-      const date = format(new Date(e.date), 'yyyy-MM-dd');
+      const date = getEntryDateStr(e.date);
       const proj = e.projectId?.name || '';
       const client = e.projectId?.clientOrTask || '';
       const task = e.taskType || '';
@@ -570,6 +586,11 @@ const AdminTimeLog = () => {
                     {/* Right: duration + actions */}
                     <div className="atl-entry-right">
                       <span className="atl-entry-duration">{formatDuration(entry.duration)}</span>
+                      {entry.createdAt && (
+                        <div style={{ fontSize: '11px', color: '#888', marginTop: '4px', textAlign: 'right' }}>
+                          Entered: {format(new Date(entry.createdAt), 'h:mm a')}
+                        </div>
+                      )}
                       <div className="unified-actions">
                         <button className="action-btn-mini edit" onClick={() => openEdit(entry)} title="Edit">
                           <Edit2 size={14} />

@@ -4,6 +4,22 @@ import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2, Edit2, Trash2, Download } from 'lucide-react';
 import './Dashboard.css';
 
+const getEntryDateStr = (dateString) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  } else {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+};
+
 const Dashboard = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,7 +175,7 @@ const Dashboard = () => {
     // Sort by date descending for the export
     const sorted = [...timeEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
     sorted.forEach(e => {
-      const date = format(new Date(e.date), 'yyyy-MM-dd');
+      const date = getEntryDateStr(e.date);
       const proj = e.projectId?.name || '';
       const client = e.projectId?.clientOrTask || '';
       const task = e.taskType || '';
@@ -179,13 +195,13 @@ const Dashboard = () => {
   };
 
   const todayStr = format(currentDate, 'yyyy-MM-dd');
-  const todayEntries = timeEntries.filter(e => format(new Date(e.date), 'yyyy-MM-dd') === todayStr);
+  const todayEntries = timeEntries.filter(e => getEntryDateStr(e.date) === todayStr);
 
   const startStr = format(weekStart, 'yyyy-MM-dd');
   const endStr = format(addDays(weekStart, 6), 'yyyy-MM-dd');
 
   const weekTotalMins = timeEntries.filter(e => {
-    const entryDate = format(new Date(e.date), 'yyyy-MM-dd');
+    const entryDate = getEntryDateStr(e.date);
     return entryDate >= startStr && entryDate <= endStr;
   }).reduce((acc, curr) => acc + curr.duration, 0);
 
@@ -243,7 +259,7 @@ const Dashboard = () => {
             {weekDays.map(day => {
               const dayStr = format(day, 'yyyy-MM-dd');
               const isActive = dayStr === todayStr;
-              const dayEntries = timeEntries.filter(e => format(new Date(e.date), 'yyyy-MM-dd') === dayStr);
+              const dayEntries = timeEntries.filter(e => getEntryDateStr(e.date) === dayStr);
               const dayTotal = dayEntries.reduce((acc, curr) => acc + curr.duration, 0);
 
               return (
@@ -319,6 +335,11 @@ const Dashboard = () => {
                       </div>
                       <div className="entry-detail-right">
                         <span className="entry-detail-duration">{formatDurationDisplay(entry.duration)}</span>
+                        {entry.createdAt && (
+                          <div style={{ fontSize: '11px', color: '#888', marginTop: '4px', textAlign: 'right' }}>
+                            Entered: {format(new Date(entry.createdAt), 'h:mm a')}
+                          </div>
+                        )}
                         <div className="unified-actions">
                           <button className="action-btn-mini edit" onClick={() => openEditModal(entry)} title="Edit"><Edit2 size={14} /></button>
                           <button className="action-btn-mini delete" onClick={() => handleDeleteEntry(entry._id)} title="Delete"><Trash2 size={14} /></button>
@@ -338,7 +359,7 @@ const Dashboard = () => {
             <div className="week-summary-grid">
               {projects.map(proj => {
                 const projWeekEntries = timeEntries.filter(e => {
-                  const entryDate = format(new Date(e.date), 'yyyy-MM-dd');
+                  const entryDate = getEntryDateStr(e.date);
                   return (e.projectId?._id === proj._id || e.projectId === proj._id) && entryDate >= startStr && entryDate <= endStr;
                 });
                 const projTotal = projWeekEntries.reduce((acc, curr) => acc + curr.duration, 0);
