@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear, addDays } from 'date-fns';
 import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail, ArrowUpDown, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import './AdminTimeLog.css';
 
@@ -207,13 +207,13 @@ const AdminTimeLog = () => {
   const groupedEntries = useMemo(() => {
     const groups = {};
     filteredEntries.forEach(entry => {
+      // Use local date string instead of UTC date part to avoid timezone shifts
       const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(entry);
     });
     
     // Maintain the sort order of the original filteredEntries
-    // We can do this by iterating through unique date keys in the order they first appear
     const orderedKeys = [];
     filteredEntries.forEach(entry => {
       const dateKey = format(new Date(entry.date), 'yyyy-MM-dd');
@@ -499,6 +499,7 @@ const AdminTimeLog = () => {
             <div key={group.date} className="atl-day-group">
               <div className="atl-day-header">
                 <div className="atl-day-date">
+                  {/* group.date is YYYY-MM-DD. Adding T12:00 parses to local noon, stable across timezones. */}
                   {format(new Date(group.date + 'T12:00:00'), 'EEEE, MMM d, yyyy')}
                 </div>
                 <div className="atl-day-stats-row">
@@ -534,7 +535,6 @@ const AdminTimeLog = () => {
                         </div>
                         <div className="atl-emp-meta">
                           <span className="atl-emp-name">{entry.userId?.name || 'Unknown'}</span>
-                          <span className="atl-emp-date">{format(new Date(entry.date), 'h:mm a')}</span>
                         </div>
                       </div>
                     )}
@@ -542,7 +542,7 @@ const AdminTimeLog = () => {
                     {/* Date — user view (since no employee column) */}
                     {!isAdmin && (
                       <div className="atl-entry-date-col">
-                        <span className="atl-user-date">{format(new Date(entry.date), 'h:mm a')}</span>
+                        <Clock size={16} color="var(--text-light)" />
                       </div>
                     )}
 

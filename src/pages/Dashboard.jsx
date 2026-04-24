@@ -76,7 +76,7 @@ const Dashboard = () => {
         const res = await api.put(`/api/time-entries/${editingEntryId}`, {
           projectId: selectedProjectId,
           taskType,
-          date: currentDate,
+          date: format(currentDate, 'yyyy-MM-dd'),
           duration: mins,
           notes
         });
@@ -85,7 +85,7 @@ const Dashboard = () => {
         const res = await api.post('/api/time-entries', {
           projectId: selectedProjectId,
           taskType,
-          date: currentDate,
+          date: format(currentDate, 'yyyy-MM-dd'),
           duration: mins,
           notes
         });
@@ -178,10 +178,15 @@ const Dashboard = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const todayEntries = timeEntries.filter(e => isSameDay(new Date(e.date), currentDate));
+  const todayStr = format(currentDate, 'yyyy-MM-dd');
+  const todayEntries = timeEntries.filter(e => format(new Date(e.date), 'yyyy-MM-dd') === todayStr);
+
+  const startStr = format(weekStart, 'yyyy-MM-dd');
+  const endStr = format(addDays(weekStart, 6), 'yyyy-MM-dd');
+
   const weekTotalMins = timeEntries.filter(e => {
-    const d = new Date(e.date);
-    return d >= weekStart && d <= addDays(weekStart, 6);
+    const entryDate = format(new Date(e.date), 'yyyy-MM-dd');
+    return entryDate >= startStr && entryDate <= endStr;
   }).reduce((acc, curr) => acc + curr.duration, 0);
 
   if (loading) return <div className="loading-state">Loading dashboard...</div>;
@@ -205,7 +210,10 @@ const Dashboard = () => {
                 id="dashboard-date-picker"
                 className="hidden-date-input"
                 value={format(currentDate, 'yyyy-MM-dd')}
-                onChange={(e) => setCurrentDate(new Date(e.target.value))}
+                onChange={(e) => {
+                  const [y, m, d] = e.target.value.split('-').map(Number);
+                  setCurrentDate(new Date(y, m - 1, d));
+                }}
               />
             </div>
             {!isSameDay(currentDate, new Date()) && (
@@ -233,8 +241,9 @@ const Dashboard = () => {
         <div className="week-overview glass-card">
           <div className="week-days-row">
             {weekDays.map(day => {
-              const isActive = isSameDay(day, currentDate);
-              const dayEntries = timeEntries.filter(e => isSameDay(new Date(e.date), day));
+              const dayStr = format(day, 'yyyy-MM-dd');
+              const isActive = dayStr === todayStr;
+              const dayEntries = timeEntries.filter(e => format(new Date(e.date), 'yyyy-MM-dd') === dayStr);
               const dayTotal = dayEntries.reduce((acc, curr) => acc + curr.duration, 0);
 
               return (
@@ -329,8 +338,8 @@ const Dashboard = () => {
             <div className="week-summary-grid">
               {projects.map(proj => {
                 const projWeekEntries = timeEntries.filter(e => {
-                  const d = new Date(e.date);
-                  return (e.projectId?._id === proj._id || e.projectId === proj._id) && d >= weekStart && d <= addDays(weekStart, 6);
+                  const entryDate = format(new Date(e.date), 'yyyy-MM-dd');
+                  return (e.projectId?._id === proj._id || e.projectId === proj._id) && entryDate >= startStr && entryDate <= endStr;
                 });
                 const projTotal = projWeekEntries.reduce((acc, curr) => acc + curr.duration, 0);
 
