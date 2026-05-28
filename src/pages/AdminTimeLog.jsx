@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear } from 'date-fns';
@@ -46,53 +46,6 @@ const AdminTimeLog = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importLines, setImportLines] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
-
-  // Timesheet instructions state
-  const [instructions, setInstructions] = useState('');
-  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
-  const [loadingInstructions, setLoadingInstructions] = useState(false);
-  const [savingInstructions, setSavingInstructions] = useState(false);
-
-  const targetUserId = isAdmin ? selectedUserId : user?._id;
-
-  const fetchInstructions = useCallback(async () => {
-    if (!targetUserId) {
-      setInstructions('');
-      return;
-    }
-    try {
-      setLoadingInstructions(true);
-      const res = await api.get(`/api/time-entries/instructions?userId=${targetUserId}&startDate=${startDate}&endDate=${endDate}`);
-      setInstructions(res.data.instructions || '');
-    } catch (err) {
-      console.error('Error fetching timesheet instructions:', err);
-    } finally {
-      setLoadingInstructions(false);
-    }
-  }, [targetUserId, startDate, endDate]);
-
-  const handleSaveInstructions = async () => {
-    if (!targetUserId) return;
-    try {
-      setSavingInstructions(true);
-      await api.post('/api/time-entries/instructions', {
-        userId: targetUserId,
-        startDate,
-        endDate,
-        instructions
-      });
-      setIsEditingInstructions(false);
-    } catch (err) {
-      console.error('Error saving timesheet instructions:', err);
-      alert('Failed to save instructions: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setSavingInstructions(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInstructions();
-  }, [fetchInstructions]);
   
   const parseCSVLine = (str) => {
     const result = [];
@@ -208,11 +161,13 @@ const AdminTimeLog = () => {
   const [editProjectId, setEditProjectId] = useState('');
   const [editTaskType, setEditTaskType] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editTimesheetInstructions, setEditTimesheetInstructions] = useState('');
   const [editDuration, setEditDuration] = useState('0:00');
   const [initialFormState, setInitialFormState] = useState({
     projectId: '',
     taskType: '',
     notes: '',
+    timesheetInstructions: '',
     duration: '0:00'
   });
 
@@ -316,18 +271,21 @@ const AdminTimeLog = () => {
     const projId = entry.projectId?._id || entry.projectId;
     const task = entry.taskType;
     const notes = entry.notes || '';
+    const instructions = entry.timesheetInstructions || '';
     const dur = formatDuration(entry.duration);
 
     setEditingEntry(entry);
     setEditProjectId(projId);
     setEditTaskType(task);
     setEditNotes(notes);
+    setEditTimesheetInstructions(instructions);
     setEditDuration(dur);
 
     setInitialFormState({
       projectId: projId,
       taskType: task,
       notes: notes,
+      timesheetInstructions: instructions,
       duration: dur
     });
     setIsModalOpen(true);
@@ -337,6 +295,7 @@ const AdminTimeLog = () => {
     return editProjectId !== initialFormState.projectId ||
            editTaskType !== initialFormState.taskType ||
            editNotes !== initialFormState.notes ||
+           editTimesheetInstructions !== initialFormState.timesheetInstructions ||
            editDuration !== initialFormState.duration;
   };
 
@@ -359,6 +318,7 @@ const AdminTimeLog = () => {
         taskType: editTaskType,
         duration: mins,
         notes: editNotes,
+        timesheetInstructions: editTimesheetInstructions
       });
       setAllEntries(prev => prev.map(e => e._id === editingEntry._id ? res.data : e));
       setIsModalOpen(false);
@@ -550,68 +510,6 @@ const AdminTimeLog = () => {
         )}
       </div>
 
-      {/* Timesheet Instructions Section */}
-      <div className="atl-instructions-section glass-card">
-        <div className="atl-instructions-header">
-          <h3>Timesheet Instructions & Comments</h3>
-          {targetUserId && !isEditingInstructions && (
-            <button 
-              className="atl-instructions-edit-btn" 
-              onClick={() => setIsEditingInstructions(true)}
-            >
-              Edit
-            </button>
-          )}
-        </div>
-        
-        {!targetUserId ? (
-          <div className="atl-instructions-placeholder">
-            Please select an employee to view or edit timesheet instructions.
-          </div>
-        ) : loadingInstructions ? (
-          <div className="atl-instructions-placeholder">
-            Loading instructions...
-          </div>
-        ) : isEditingInstructions ? (
-          <div className="atl-instructions-editor">
-            <textarea
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Add specific instructions or comments for this timesheet period..."
-              className="atl-instructions-textarea"
-              rows={4}
-            />
-            <div className="atl-instructions-actions">
-              <button 
-                className="btn btn-primary btn-sm" 
-                onClick={handleSaveInstructions}
-                disabled={savingInstructions}
-              >
-                {savingInstructions ? 'Saving...' : 'Save Instructions'}
-              </button>
-              <button 
-                className="btn btn-outline btn-sm" 
-                onClick={() => {
-                  setIsEditingInstructions(false);
-                  fetchInstructions(); // reset to saved state
-                }}
-                disabled={savingInstructions}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="atl-instructions-display">
-            {instructions ? (
-              <p className="atl-instructions-text">{instructions}</p>
-            ) : (
-              <p className="atl-instructions-empty">No instructions or comments added for this timesheet period.</p>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Entry Detail List */}
       {filteredEntries.length === 0 ? (
         <div className="atl-empty">
@@ -685,6 +583,16 @@ const AdminTimeLog = () => {
                           <div className="atl-entry-desc-label">Notes:</div>
                           <div className="atl-entry-notes">
                             {noteLines.map((line, i) => (
+                              <div key={i} className="atl-note-line">{line}</div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                      {entry.timesheetInstructions && (
+                        <>
+                          <div className="atl-entry-desc-label" style={{ marginTop: '6px' }}>Instructions:</div>
+                          <div className="atl-entry-notes" style={{ fontStyle: 'italic', borderLeft: '2px solid var(--primary-orange)', paddingLeft: '8px' }}>
+                            {entry.timesheetInstructions.split('\n').filter(l => l.trim()).map((line, i) => (
                               <div key={i} className="atl-note-line">{line}</div>
                             ))}
                           </div>
@@ -780,6 +688,15 @@ const AdminTimeLog = () => {
                   onChange={e => setEditNotes(e.target.value)}
                   rows={5}
                   placeholder="Work details..."
+                />
+              </div>
+              <div className="atl-modal-group" style={{ marginTop: '0.75rem' }}>
+                <label>Timesheet Instructions</label>
+                <textarea
+                  value={editTimesheetInstructions}
+                  onChange={e => setEditTimesheetInstructions(e.target.value)}
+                  rows={4}
+                  placeholder="Add specific instructions or comments for this timesheet..."
                 />
               </div>
             </div>

@@ -32,12 +32,14 @@ const Dashboard = () => {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [taskType, setTaskType] = useState('');
   const [notes, setNotes] = useState('');
+  const [timesheetInstructions, setTimesheetInstructions] = useState('');
   const [duration, setDuration] = useState('0:00');
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [initialFormState, setInitialFormState] = useState({
     projectId: '',
     taskType: '',
     notes: '',
+    timesheetInstructions: '',
     duration: '0:00'
   });
 
@@ -94,7 +96,8 @@ const Dashboard = () => {
           taskType,
           date: format(currentDate, 'yyyy-MM-dd'),
           duration: mins,
-          notes
+          notes,
+          timesheetInstructions
         });
         setTimeEntries(timeEntries.map(e => e._id === editingEntryId ? res.data : e));
       } else {
@@ -103,7 +106,8 @@ const Dashboard = () => {
           taskType,
           date: format(currentDate, 'yyyy-MM-dd'),
           duration: mins,
-          notes
+          notes,
+          timesheetInstructions
         });
         setTimeEntries([res.data, ...timeEntries]);
       }
@@ -128,17 +132,20 @@ const Dashboard = () => {
     const projId = entry.projectId?._id || entry.projectId;
     const durStr = formatDurationDisplay(entry.duration);
     const entryNotes = entry.notes || '';
+    const entryInstructions = entry.timesheetInstructions || '';
     
     setEditingEntryId(entry._id);
     setSelectedProjectId(projId);
     setTaskType(entry.taskType);
     setNotes(entryNotes);
+    setTimesheetInstructions(entryInstructions);
     setDuration(durStr);
     
     setInitialFormState({
       projectId: projId,
       taskType: entry.taskType,
       notes: entryNotes,
+      timesheetInstructions: entryInstructions,
       duration: durStr
     });
     setIsModalOpen(true);
@@ -148,6 +155,7 @@ const Dashboard = () => {
     return selectedProjectId !== initialFormState.projectId ||
            taskType !== initialFormState.taskType ||
            notes !== initialFormState.notes ||
+           timesheetInstructions !== initialFormState.timesheetInstructions ||
            duration !== initialFormState.duration;
   };
 
@@ -165,6 +173,7 @@ const Dashboard = () => {
     setSelectedProjectId('');
     setTaskType('');
     setNotes('');
+    setTimesheetInstructions('');
     setDuration('0:00');
     setEditingEntryId(null);
   };
@@ -332,6 +341,16 @@ const Dashboard = () => {
                             </div>
                           </>
                         )}
+                        {entry.timesheetInstructions && (
+                          <>
+                            <div className="entry-detail-label" style={{ marginTop: '6px' }}>Instructions:</div>
+                            <div className="entry-detail-notes" style={{ fontStyle: 'italic', borderLeft: '2px solid var(--primary-orange)', paddingLeft: '8px' }}>
+                              {entry.timesheetInstructions.split('\n').filter(l => l.trim()).map((line, i) => (
+                                <div key={i} className="entry-note-line">{line}</div>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="entry-detail-right">
                         <span className="entry-detail-duration">{formatDurationDisplay(entry.duration)}</span>
@@ -452,6 +471,18 @@ const Dashboard = () => {
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     className="compact-textarea"
+                  />
+                  <span className="textarea-hint">Shift+Return for line break</span>
+                </div>
+              </div>
+
+              <div className="compact-row" style={{ marginTop: '0.75rem' }}>
+                <div className="compact-form-group full-width">
+                  <textarea
+                    placeholder="Timesheet Instructions (optional)"
+                    value={timesheetInstructions}
+                    onChange={e => setTimesheetInstructions(e.target.value)}
+                    className="compact-textarea instructions-input"
                   />
                   <span className="textarea-hint">Shift+Return for line break</span>
                 </div>

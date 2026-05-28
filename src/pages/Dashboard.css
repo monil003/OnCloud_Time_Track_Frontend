@@ -495,7 +495,8 @@
 
 /* Compact Modal Styles */
 .compact-modal {
-  max-width: 520px;
+  width: 90%;
+  max-width: 650px;
   padding: 0;
   border-radius: 12px;
   background: white;
@@ -594,7 +595,7 @@
 
 .compact-textarea {
   width: 100%;
-  min-height: 180px;
+  min-height: 140px;
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -602,6 +603,10 @@
   line-height: 1.5;
   resize: none;
   outline: none;
+}
+
+.compact-textarea.instructions-input {
+  min-height: 90px;
 }
 
 .textarea-hint {
