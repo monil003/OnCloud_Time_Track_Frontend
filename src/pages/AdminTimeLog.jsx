@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { Clock, Users, Briefcase, CalendarRange, Download, Edit2, Trash2, Filter, Upload, AlertCircle, Mail, ArrowUpDown, ArrowUpAZ, ArrowDownAZ } from 'lucide-react';
 import './AdminTimeLog.css';
 
@@ -46,6 +46,53 @@ const AdminTimeLog = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importLines, setImportLines] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
+
+  // Timesheet instructions state
+  const [instructions, setInstructions] = useState('');
+  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+  const [loadingInstructions, setLoadingInstructions] = useState(false);
+  const [savingInstructions, setSavingInstructions] = useState(false);
+
+  const targetUserId = isAdmin ? selectedUserId : user?._id;
+
+  const fetchInstructions = useCallback(async () => {
+    if (!targetUserId) {
+      setInstructions('');
+      return;
+    }
+    try {
+      setLoadingInstructions(true);
+      const res = await api.get(`/api/time-entries/instructions?userId=${targetUserId}&startDate=${startDate}&endDate=${endDate}`);
+      setInstructions(res.data.instructions || '');
+    } catch (err) {
+      console.error('Error fetching timesheet instructions:', err);
+    } finally {
+      setLoadingInstructions(false);
+    }
+  }, [targetUserId, startDate, endDate]);
+
+  const handleSaveInstructions = async () => {
+    if (!targetUserId) return;
+    try {
+      setSavingInstructions(true);
+      await api.post('/api/time-entries/instructions', {
+        userId: targetUserId,
+        startDate,
+        endDate,
+        instructions
+      });
+      setIsEditingInstructions(false);
+    } catch (err) {
+      console.error('Error saving timesheet instructions:', err);
+      alert('Failed to save instructions: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSavingInstructions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInstructions();
+  }, [fetchInstructions]);
   
   const parseCSVLine = (str) => {
     const result = [];
@@ -237,7 +284,7 @@ const AdminTimeLog = () => {
     });
 
     return orderedKeys.map(key => {
-      const dayEntries = groups[key];
+      const dayEntries = [...groups[key]].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
       const dayTotalMins = dayEntries.reduce((sum, e) => sum + e.duration, 0);
       const uniqueEmps = new Set(dayEntries.map(e => e.userId?._id)).size;
       
@@ -500,6 +547,68 @@ const AdminTimeLog = () => {
               <button onClick={() => setSelectedProjectName('')}>✕</button>
             </div>
           </>
+        )}
+      </div>
+
+      {/* Timesheet Instructions Section */}
+      <div className="atl-instructions-section glass-card">
+        <div className="atl-instructions-header">
+          <h3>Timesheet Instructions & Comments</h3>
+          {targetUserId && !isEditingInstructions && (
+            <button 
+              className="atl-instructions-edit-btn" 
+              onClick={() => setIsEditingInstructions(true)}
+            >
+              Edit
+            </button>
+          )}
+        </div>
+        
+        {!targetUserId ? (
+          <div className="atl-instructions-placeholder">
+            Please select an employee to view or edit timesheet instructions.
+          </div>
+        ) : loadingInstructions ? (
+          <div className="atl-instructions-placeholder">
+            Loading instructions...
+          </div>
+        ) : isEditingInstructions ? (
+          <div className="atl-instructions-editor">
+            <textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Add specific instructions or comments for this timesheet period..."
+              className="atl-instructions-textarea"
+              rows={4}
+            />
+            <div className="atl-instructions-actions">
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={handleSaveInstructions}
+                disabled={savingInstructions}
+              >
+                {savingInstructions ? 'Saving...' : 'Save Instructions'}
+              </button>
+              <button 
+                className="btn btn-outline btn-sm" 
+                onClick={() => {
+                  setIsEditingInstructions(false);
+                  fetchInstructions(); // reset to saved state
+                }}
+                disabled={savingInstructions}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="atl-instructions-display">
+            {instructions ? (
+              <p className="atl-instructions-text">{instructions}</p>
+            ) : (
+              <p className="atl-instructions-empty">No instructions or comments added for this timesheet period.</p>
+            )}
+          </div>
         )}
       </div>
 
